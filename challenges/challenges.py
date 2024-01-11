@@ -1,10 +1,14 @@
 import zipfile
 import os
 from glob import glob
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from secrets import token_hex
 import json
 import shutil
+from data.models import Challenge
+from data.database import SessionLocal
+from typing import Annotated
+from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix="/challenges",
@@ -15,8 +19,17 @@ f = open('configure.json')
 data = json.load(f)
 STORE = data['store_path']
 
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+db_dependency = Annotated[Session, Depends(get_db)]
+
 @router.post("/create-challenge")
-async def create_challenge(file:UploadFile = File(...)):
+async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
     file_ext = file.filename.split(".").pop()
     if file_ext != "zip":
         raise HTTPException(status_code=401, detail='Bad extension')
@@ -44,7 +57,7 @@ async def create_challenge(file:UploadFile = File(...)):
     dev_dir_files = [x.split('\\')[1] for x in dev_dir]
     challenge__dir_files = glob(f"{challenges_dir}/{challenge_name}/*")
     challenge_files = [x.split('\\')[1] for x in challenge__dir_files]
-    
+
     if (not "expected.tsv" in dev_dir_files) or (not "README.md" in challenge_files):
         # TODO: Sprawdzić więcej rzeczy jeśli będzie potrzebne
         shutil.rmtree(f"{challenges_dir}/{challenge_name}")
@@ -52,6 +65,41 @@ async def create_challenge(file:UploadFile = File(...)):
 
     if already_exist_error:
         raise HTTPException(status_code=401, detail='Challenge has been already created!')
+
+    challenge_model = {
+        "title": "",
+        "challenge_type": "",
+        "main_metric": "",
+        "best_score": "",
+        "deadline": "",
+        "describe": "",
+        "prize": ""
+    }
+
+    with open(f"{challenges_dir}/{challenge_name}/README.md", "r") as file:
+        readme_lines = file.readlines()
+        for line in readme_lines:
+            if ":" in line:
+                attribute = line.split(':')[0].replace(" ", "")
+                value = line.split(':')[1].replace(" ", "")
+                if attribute in challenge_model.keys():
+                    challenge_model[attribute] = value
+
+    if challenge_model["title"] == "":
+        shutil.rmtree(f"{challenges_dir}/{challenge_name}")
+        raise HTTPException(status_code=401, detail='Challenge title not finded!')
+
+    create_challenge_model = Challenge(
+        title = challenge_model["title"],
+        type = challenge_model["challenge_type"],
+        describe = challenge_model["describe"],
+        main_metric = challenge_model["main_metric"],
+        best_score = challenge_model["best_score"],
+        deadline = challenge_model["deadline"],
+        prize = challenge_model["prize"],
+    )
+    db.add(create_challenge_model)
+    db.commit()
     
     # TODO: Brać tylko potrzebne pliki z challeng'u, reszte usuwać
     # TODO: Tylko admin może tworzyć challenge

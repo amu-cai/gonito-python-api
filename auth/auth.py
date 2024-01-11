@@ -1,8 +1,8 @@
 from datetime import timedelta, datetime
 from typing import Annotated
+from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
 from starlette import status
 from data.database import SessionLocal
 from data.models import Users
