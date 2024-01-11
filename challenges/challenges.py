@@ -47,6 +47,7 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
     with zipfile.ZipFile(f"{STORE}/temp/{file_path}", 'r') as zip_ref:
         current_challenges = [x.replace(f"{challenges_dir}\\", '') for x in glob(f"{challenges_dir}/*")]
         challenge_name = zip_ref.filelist[0].filename[:-1]
+        # TODO: Sprawdzić czy na bazie nie ma o takim samym tytule, nie tylko w plikach!
         if challenge_name in current_challenges:
             already_exist_error = True
         zip_ref.extractall(challenges_dir)
@@ -80,8 +81,8 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
         readme_lines = file.readlines()
         for line in readme_lines:
             if ":" in line:
-                attribute = line.split(':')[0].replace(" ", "")
-                value = line.split(':')[1].replace(" ", "")
+                attribute = line.split(':')[0].replace(" ", "", 1)
+                value = line.split(':')[1].replace(" ", "", 1)[:-1]
                 if attribute in challenge_model.keys():
                     challenge_model[attribute] = value
 
@@ -107,3 +108,20 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
     # TODO: Stworzenie challenge'a poprzez adres url githuba
 
     return {"success": True, "file_path": file_path, "message": "File uloaded successfully"}
+
+
+@router.get("/get-challenges")
+async def get_challenges(db: db_dependency):
+    result = []
+    for challenge in db.query(Challenge).all():
+        result.append({
+            "id": challenge.id,
+            "title": challenge.title,
+            "type": challenge.type,
+            "describe": challenge.describe,
+            "main_metric": challenge.main_metric,
+            "best_score": challenge.best_score,
+            "deadline": challenge.deadline,
+            "prize": challenge.prize,
+        })
+    return result
