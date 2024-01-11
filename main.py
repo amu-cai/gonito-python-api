@@ -1,15 +1,17 @@
-import models
+import data.models
 from typing import Annotated
 from fastapi import Depends, FastAPI, status, HTTPException
-from database import engine, SessionLocal
+from data.database import engine, SessionLocal
 from sqlalchemy.orm import Session
-import auth
-from auth import get_current_user
+import auth.auth
+import challenges.challenges
+from auth.auth import get_current_user
 
 app = FastAPI()
-app.include_router(auth.router)
+app.include_router(auth.auth.router)
+app.include_router(challenges.challenges.router)
 
-models.Base.metadata.create_all(bind=engine)
+data.models.Base.metadata.create_all(bind=engine)
 
 def get_db():
     db = SessionLocal()
