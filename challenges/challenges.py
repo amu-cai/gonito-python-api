@@ -1,7 +1,7 @@
 import zipfile
 import os
 from glob import glob
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form
 from secrets import token_hex
 import json
 import shutil
@@ -9,6 +9,7 @@ from data.models import Challenge
 from data.database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/challenges",
@@ -28,9 +29,33 @@ def get_db():
 
 db_dependency = Annotated[Session, Depends(get_db)]
 
+class ChallengeInputModel(BaseModel):
+    title: str
+    description: str | None = None
+    type: str
+    main_metric: str
+    deadline: str | None = None
+    award: str | None = None
+
 @router.post("/create-challenge")
-async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
-    file_ext = file.filename.split(".").pop()
+async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
+    best_score = "0"
+    create_challenge_model = Challenge(
+        title = challenge_input_model.title,
+        type = challenge_input_model.type,
+        description = challenge_input_model.description,
+        main_metric = challenge_input_model.main_metric,
+        best_score = best_score,
+        deadline = challenge_input_model.deadline,
+        award = challenge_input_model.award,
+    )
+    db.add(create_challenge_model)
+    db.commit()
+    return challenge_input_model
+
+@router.post("/create-challenge-files")
+async def create_challenge_files(db: db_dependency, challenge_file:UploadFile = File(...)):
+    file_ext = challenge_file.filename.split(".").pop()
     if file_ext != "zip":
         raise HTTPException(status_code=401, detail='Bad extension')
 
@@ -39,7 +64,7 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
     file_path = f"{file_name}.{file_ext}"
     
     with open(f"{STORE}/temp/{file_path}", "wb") as f:
-        content = await file.read()
+        content = await challenge_file.read()
         f.write(content)
 
     challenge_name = ""
@@ -68,13 +93,13 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
         raise HTTPException(status_code=401, detail='Challenge has been already created!')
 
     challenge_model = {
-        "title": "",
-        "challenge_type": "",
+        "name": "",
+        "type": "",
         "main_metric": "",
         "best_score": "",
         "deadline": "",
-        "describe": "",
-        "prize": ""
+        "description": "",
+        "award": ""
     }
 
     with open(f"{challenges_dir}/{challenge_name}/README.md", "r") as file:
@@ -90,14 +115,15 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
         shutil.rmtree(f"{challenges_dir}/{challenge_name}")
         raise HTTPException(status_code=401, detail='Challenge title not finded!')
 
+    # TODO: W tym miejscu zrobić update lub połączyć requesty, albo ten request będzie tworzył nowy endpoint, taki który dotyczy szczegółów challenge'a      
     create_challenge_model = Challenge(
         title = challenge_model["title"],
-        type = challenge_model["challenge_type"],
+        type = challenge_model["type"],
         describe = challenge_model["describe"],
         main_metric = challenge_model["main_metric"],
         best_score = challenge_model["best_score"],
         deadline = challenge_model["deadline"],
-        prize = challenge_model["prize"],
+        award = challenge_model["award"],
     )
     db.add(create_challenge_model)
     db.commit()
@@ -106,8 +132,9 @@ async def create_challenge(db: db_dependency, file:UploadFile = File(...)):
     # TODO: Tylko admin może tworzyć challenge
     # TODO: Poprawić kody błędów
     # TODO: Stworzenie challenge'a poprzez adres url githuba
+    # TODO: Readme wsadzić do bazy i wykorzystać w challenge/readme
 
-    return {"success": True, "file_path": file_path, "message": "File uloaded successfully"}
+    return {"success": True, "file_path": file_path, "message": "File uploaded successfully"}
 
 
 @router.get("/get-challenges")
@@ -118,10 +145,10 @@ async def get_challenges(db: db_dependency):
             "id": challenge.id,
             "title": challenge.title,
             "type": challenge.type,
-            "describe": challenge.describe,
-            "main_metric": challenge.main_metric,
-            "best_score": challenge.best_score,
+            "description": challenge.description,
+            "mainMetric": challenge.main_metric,
+            "bestScore": challenge.best_score,
             "deadline": challenge.deadline,
-            "prize": challenge.prize,
+            "award": challenge.award,
         })
     return result
