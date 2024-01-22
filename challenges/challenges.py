@@ -60,44 +60,52 @@ def check_file_extension(file):
     file_ext = file.filename.split(".").pop()
     if file_ext != "zip":
         raise HTTPException(status_code=401, detail='Bad extension')
-
-@router.post("/create-challenge-details")
-async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
-    check_file_extension(challenge_file)
-
-    challenges_dir = f"{STORE}/challenges"
+    
+async def extract_challenge(db, challenge_file, challenges_dir):
     file_name = token_hex(10)
     file_path = f"{file_name}.zip"
-    
-    with open(f"{STORE}/temp/{file_path}", "wb") as f:
+    temp_zip_path = f"{STORE}/temp/{file_path}"
+    print("SDSDAADS")
+
+    with open(temp_zip_path, "wb") as f:
         content = await challenge_file.read()
         f.write(content)
 
-    challenge_name = ""
-
     already_exist_error = False
-    with zipfile.ZipFile(f"{STORE}/temp/{file_path}", 'r') as zip_ref:
+
+    with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
         current_challenges = [x.replace(f"{challenges_dir}\\", '') for x in glob(f"{challenges_dir}/*")]
+        print(zip_ref.filelist[0])
         challenge_name = zip_ref.filelist[0].filename[:-1]
         current_challenges_db = [challenge.title for challenge in db.query(Challenge).all()]
         if (challenge_name in current_challenges) or (challenge_name in current_challenges_db):
             already_exist_error = True
         zip_ref.extractall(challenges_dir)
 
-    os.remove(f"{STORE}/temp/{file_path}")
-
+    os.remove(temp_zip_path)
+    
     if already_exist_error:
         raise HTTPException(status_code=401, detail='Challenge has been already created!')
+    return challenge_name
 
+def check_challenge_structure(challenges_dir, challenge_name):
     dev_dir = glob(f"{challenges_dir}/{challenge_name}/dev-0/*")
     dev_dir_files = [x.split('\\')[1] for x in dev_dir]
     challenge__dir_files = glob(f"{challenges_dir}/{challenge_name}/*")
     challenge_files = [x.split('\\')[1] for x in challenge__dir_files]
-
     if (not "expected.tsv" in dev_dir_files) or (not "README.md" in challenge_files):
         # TODO: Sprawdzić więcej rzeczy jeśli będzie potrzebne
         shutil.rmtree(f"{challenges_dir}/{challenge_name}")
         raise HTTPException(status_code=401, detail='Bad challenge structure!')
+
+@router.post("/create-challenge-details")
+async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
+    print("SDSDAADS 1 ")
+    check_file_extension(challenge_file)
+    print("SDSDAADS 2")
+    challenges_dir = f"{STORE}/challenges"
+    challenge_name = extract_challenge(db, challenge_file, challenges_dir)
+    check_challenge_structure(challenges_dir, challenge_name)
 
     challenge_model = {
         "name": "",
