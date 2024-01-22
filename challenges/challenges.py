@@ -39,6 +39,9 @@ class ChallengeInputModel(BaseModel):
 
 @router.post("/create-challenge")
 async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
+    current_challenges_db = [challenge.title for challenge in db.query(Challenge).all()]
+    if challenge_input_model.title in current_challenges_db:
+        raise HTTPException(status_code=401, detail='Challenge has been already created!')
     best_score = "0"
     create_challenge_model = Challenge(
         title = challenge_input_model.title,
@@ -53,31 +56,38 @@ async def create_challenge(db: db_dependency, challenge_input_model: ChallengeIn
     db.commit()
     return challenge_input_model
 
-@router.post("/create-challenge-files")
-async def create_challenge_files(db: db_dependency, challenge_file:UploadFile = File(...)):
-    file_ext = challenge_file.filename.split(".").pop()
+def check_file_extension(file):
+    file_ext = file.filename.split(".").pop()
     if file_ext != "zip":
         raise HTTPException(status_code=401, detail='Bad extension')
 
+@router.post("/create-challenge-details")
+async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
+    check_file_extension(challenge_file)
+
     challenges_dir = f"{STORE}/challenges"
     file_name = token_hex(10)
-    file_path = f"{file_name}.{file_ext}"
+    file_path = f"{file_name}.zip"
     
     with open(f"{STORE}/temp/{file_path}", "wb") as f:
         content = await challenge_file.read()
         f.write(content)
 
     challenge_name = ""
+
     already_exist_error = False
     with zipfile.ZipFile(f"{STORE}/temp/{file_path}", 'r') as zip_ref:
         current_challenges = [x.replace(f"{challenges_dir}\\", '') for x in glob(f"{challenges_dir}/*")]
         challenge_name = zip_ref.filelist[0].filename[:-1]
-        # TODO: Sprawdzić czy na bazie nie ma o takim samym tytule, nie tylko w plikach!
-        if challenge_name in current_challenges:
+        current_challenges_db = [challenge.title for challenge in db.query(Challenge).all()]
+        if (challenge_name in current_challenges) or (challenge_name in current_challenges_db):
             already_exist_error = True
         zip_ref.extractall(challenges_dir)
 
     os.remove(f"{STORE}/temp/{file_path}")
+
+    if already_exist_error:
+        raise HTTPException(status_code=401, detail='Challenge has been already created!')
 
     dev_dir = glob(f"{challenges_dir}/{challenge_name}/dev-0/*")
     dev_dir_files = [x.split('\\')[1] for x in dev_dir]
@@ -89,9 +99,6 @@ async def create_challenge_files(db: db_dependency, challenge_file:UploadFile = 
         shutil.rmtree(f"{challenges_dir}/{challenge_name}")
         raise HTTPException(status_code=401, detail='Bad challenge structure!')
 
-    if already_exist_error:
-        raise HTTPException(status_code=401, detail='Challenge has been already created!')
-
     challenge_model = {
         "name": "",
         "type": "",
@@ -102,14 +109,14 @@ async def create_challenge_files(db: db_dependency, challenge_file:UploadFile = 
         "award": ""
     }
 
-    with open(f"{challenges_dir}/{challenge_name}/README.md", "r") as file:
-        readme_lines = file.readlines()
-        for line in readme_lines:
-            if ":" in line:
-                attribute = line.split(':')[0].replace(" ", "", 1)
-                value = line.split(':')[1].replace(" ", "", 1)[:-1]
-                if attribute in challenge_model.keys():
-                    challenge_model[attribute] = value
+    # with open(f"{challenges_dir}/{challenge_name}/README.md", "r") as file:
+    #     readme_lines = file.readlines()
+    #     for line in readme_lines:
+    #         if ":" in line:
+    #             attribute = line.split(':')[0].replace(" ", "", 1)
+    #             value = line.split(':')[1].replace(" ", "", 1)[:-1]
+    #             if attribute in challenge_model.keys():
+    #                 challenge_model[attribute] = value
 
     if challenge_model["title"] == "":
         shutil.rmtree(f"{challenges_dir}/{challenge_name}")
