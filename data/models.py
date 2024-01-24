@@ -1,5 +1,5 @@
 from data.database import Base
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey
 
 class Users(Base):
     __tablename__ = 'users'
@@ -20,3 +20,11 @@ class Challenge(Base):
     best_score = Column(String)
     deadline = Column(String)
     award = Column(String)
+
+class ChallengeReadme(Base):
+    __tablename__ = 'challenges_readme'
+
+    id = Column(Integer, primary_key=True, index=True)
+    challenge_title = Column(String, ForeignKey("challenges.title"))
+    readme = Column(UnicodeText)
+
