@@ -5,13 +5,16 @@ from data.database import engine, SessionLocal
 from sqlalchemy.orm import Session
 import auth.auth
 import challenges.challenges
+import evaluation.evaluation
 from auth.auth import get_current_user
 from fastapi.middleware.cors import CORSMiddleware
+from data.models import Metric
 
 app = FastAPI()
 
 app.include_router(auth.auth.router)
 app.include_router(challenges.challenges.router)
+app.include_router(evaluation.evaluation.router)
 
 origins = ["*"]
 

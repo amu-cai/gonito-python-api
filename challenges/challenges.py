@@ -1,14 +1,16 @@
 import zipfile
 import os
 from glob import glob
-from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
 from secrets import token_hex
 import json
 from data.models import Challenge, ChallengeReadme
 from data.database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from pydantic import BaseModel
+from pathlib import Path
 
 router = APIRouter(
     prefix="/challenges",
@@ -37,7 +39,7 @@ class ChallengeInputModel(BaseModel):
     deadline: str | None = None
     award: str | None = None
 
-def check_challenge_already_exist(db, challenge_title):
+def check_challenge_already_in_db(db, challenge_title):
     current_challenges_db = [challenge.title for challenge in db.query(Challenge).all()]
     if challenge_title in current_challenges_db:
         raise HTTPException(status_code=401, detail='Challenge has been already created!')
@@ -47,13 +49,12 @@ def check_challenge_title(challenge_title):
         raise HTTPException(status_code=401, detail='Invalid challenge title')
 
 def delete_challenge_by_title(db, challenge_title):
-    challenges_db = [[challenge.id, challenge.title] for challenge in db.query(Challenge).all()]
-    challenge_id = [challenge[0] for challenge in challenges_db if challenge[1] == challenge_title][0]
+    challenge_id = [challenge.id for challenge in db.query(Challenge).where(Challenge.challenge_title == challenge_title)][0]
     challenge = db.get(Challenge, challenge_id)
     db.delete(challenge)
     db.commit()
 
-def check_challenge_already_exist(challenge_folder_name):
+def check_challenge_already_in_store(challenge_folder_name):
     current_challenges = [x.replace(f"{challenges_dir}\\", '') for x in glob(f"{challenges_dir}/*")]
     if challenge_folder_name in current_challenges:
         return True
@@ -83,12 +84,14 @@ def check_challenge_folder_name(challenge_title, challenge_name):
     return not challenge_title == challenge_name
 
 async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
+    required_files = ["README.md", "dev-0/expected.tsv", "test-A/expected.tsv"]
     with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
         challenge_name = zip_ref.filelist[0].filename[:-1]
         folder_name_error = check_challenge_folder_name(challenge_title, challenge_name)
-        challenge_already_exist_error = check_challenge_already_exist(challenge_name)
+        challenge_already_exist_error = check_challenge_already_in_store(challenge_name)
         structure_error = check_challenge_structure(zip_ref, challenge_name)
-        zip_ref.extractall(challenges_dir)
+        for file in required_files:
+            zip_ref.extract(f"{challenge_name}/{file}", challenges_dir)
     os.remove(temp_zip_path)
     if folder_name_error:
         delete_challenge_by_title(challenge_title)
@@ -98,22 +101,22 @@ async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
         raise HTTPException(status_code=401, detail='Challenge already exist in store!')
     if structure_error:
         delete_challenge_by_title(challenge_title)
-        required_files = ["README.md", "dev-0/expected.tsv", "test-A/expected.tsv"]
         raise HTTPException(status_code=401, detail=f'Bad challenge structure! Challenge required files: {str(required_files)}')
     return challenge_name
 
 def load_challenge_title_from_temp():
-    challenge_title_path = [x.replace("\\", '') for x in glob(f"{STORE}/temp/created_challenge_title/*")]
-    challenge_title = challenge_title_path[0]
-    os.remove(f"challenge_title_path/{challenge_title}")
+    challenge_title_path = [x.replace("\\", '/') for x in glob(f"{STORE}/temp/created_challenge_title/*")][0]
+    challenge_title = challenge_title_path.split("/")[-1]
+    os.remove(challenge_title_path)
     return challenge_title
 
 @router.post("/create-challenge")
 async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
     check_challenge_title(challenge_input_model.title)
-    check_challenge_already_exist(db, challenge_input_model.title)
+    check_challenge_already_in_db(db, challenge_input_model.title)
+    Path(f"{STORE}/temp/created_challenge_title").mkdir(parents=True, exist_ok=True)
     temp_challenge_title = f"{STORE}/temp/created_challenge_title/{challenge_input_model.title}"
-    with open(temp_challenge_title, "wb") as f:
+    with open(temp_challenge_title, "a") as f:
         f.write(challenge_input_model.title)
     best_score = "0"
     create_challenge_model = Challenge(
@@ -127,7 +130,7 @@ async def create_challenge(db: db_dependency, challenge_input_model: ChallengeIn
     )
     db.add(create_challenge_model)
     db.commit()
-    return challenge_input_model
+    return {"success": True, "challenge": challenge_input_model.title, "message": "Challenge data added successfully"}
 
 @router.post("/create-challenge-details")
 async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
@@ -147,7 +150,7 @@ async def create_challenge_details(db: db_dependency, challenge_file:UploadFile 
     # TODO: Poprawić kody błędów
     # TODO: Readme wsadzić do bazy i wykorzystać w challenge/readme
     # TODO: Stworzenie challenge'a poprzez adres url githuba ??? (i tak musi być niewidoczne test-A/expected.tsv)
-    return {"success": True, "challenge": challenge_name, "message": "Challenge uploaded successfully"}
+    return {"success": True, "challenge": challenge_folder_name, "message": "Challenge uploaded successfully"}
 
 @router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
@@ -163,4 +166,9 @@ async def get_challenges(db: db_dependency):
             "deadline": challenge.deadline,
             "award": challenge.award,
         })
+    return result
+
+@router.get("/{challenge}/readme")
+async def get_challenge_readme(db: db_dependency, challenge: str):
+    result = [x.readme for x in db.query(ChallengeReadme).where(ChallengeReadme.challenge_title == challenge)][0]
     return result

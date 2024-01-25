@@ -9,6 +9,12 @@ class Users(Base):
     hashed_password = Column(String)
     is_admin = Column(Boolean)
 
+class Metric(Base):
+    __tablename__ = 'metrics'
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True)
+
 class Challenge(Base):
     __tablename__ = 'challenges'
 
