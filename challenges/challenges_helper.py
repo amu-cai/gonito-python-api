@@ -22,7 +22,7 @@ def check_challenge_title(challenge_title):
         raise HTTPException(status_code=401, detail='Invalid challenge title')
 
 def delete_challenge_by_title(db, challenge_title):
-    challenge_id = [challenge.id for challenge in db.query(Challenge).where(Challenge.challenge_title == challenge_title)][0]
+    challenge_id = [challenge.id for challenge in db.query(Challenge).where(Challenge.title == challenge_title)][0]
     challenge = db.get(Challenge, challenge_id)
     db.delete(challenge)
     db.commit()
@@ -77,8 +77,10 @@ async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
         raise HTTPException(status_code=401, detail=f'Bad challenge structure! Challenge required files: {str(required_files)}')
     return challenge_name
 
-def load_challenge_title_from_temp():
-    challenge_title_path = [x.replace("\\", '/') for x in glob(f"{STORE}/temp/created_challenge_title/*")][0]
+def load_challenge_from_temp(db):
+    challenge_title_path = [x.replace("\\", '/') for x in glob(f"{STORE}/temp/challenge_created/*")][0]
     challenge_title = challenge_title_path.split("/")[-1]
+    challenge_id = [challenge.id for challenge in db.query(Challenge).where(Challenge.title == challenge_title)][0]
+    challenge = db.get(Challenge, challenge_id)
     os.remove(challenge_title_path)
-    return challenge_title
+    return challenge

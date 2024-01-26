@@ -27,10 +27,11 @@ class Challenge(Base):
     deadline = Column(String)
     award = Column(String)
 
-class ChallengeReadme(Base):
-    __tablename__ = 'challenges_readme'
+class ChallengeInfo(Base):
+    __tablename__ = 'challenge_info'
 
     id = Column(Integer, primary_key=True, index=True)
-    challenge_title = Column(String, ForeignKey("challenges.title"))
+    title = Column(String, ForeignKey("challenges.title"))
+    description = Column(String)
     readme = Column(UnicodeText)
 

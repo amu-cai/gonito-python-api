@@ -1,7 +1,7 @@
 
 from fastapi import APIRouter, UploadFile, File, Depends
 import json
-from data.models import Challenge, ChallengeReadme
+from data.models import Challenge, ChallengeInfo
 from data.database import SessionLocal
 from typing import Annotated
 from sqlalchemy.orm import Session
@@ -41,9 +41,11 @@ class ChallengeInputModel(BaseModel):
 async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
     challenges_helper.check_challenge_title(challenge_input_model.title)
     challenges_helper.check_challenge_already_in_db(db, challenge_input_model.title)
-    Path(f"{STORE}/temp/created_challenge_title").mkdir(parents=True, exist_ok=True)
-    temp_challenge_title = f"{STORE}/temp/created_challenge_title/{challenge_input_model.title}"
-    with open(temp_challenge_title, "a") as f:
+    challenge_temp_path = f"{STORE}/temp/challenge_created"
+    Path(challenge_temp_path).mkdir(parents=True, exist_ok=True)
+    temp_challenge_created = f"{challenge_temp_path}/{challenge_input_model.title}"
+    print(temp_challenge_created)
+    with open(temp_challenge_created, "a") as f:
         f.write(challenge_input_model.title)
     best_score = "0"
     create_challenge_model = Challenge(
@@ -61,14 +63,15 @@ async def create_challenge(db: db_dependency, challenge_input_model: ChallengeIn
 
 @router.post("/create-challenge-details")
 async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
-    challenge_title = challenges_helper.load_challenge_title_from_temp()
+    challenge = challenges_helper.load_challenge_from_temp(db)
     challenges_helper.check_file_extension(challenge_file)
     temp_zip_path = await challenges_helper.save_zip_file(challenge_file)
-    challenge_folder_name = await challenges_helper.extract_challenge(db, challenge_title, temp_zip_path, challenges_dir)
+    challenge_folder_name = await challenges_helper.extract_challenge(db, challenge.title, temp_zip_path, challenges_dir)
     readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
     readme_content = readme.read()
-    create_challenge_readme_model = ChallengeReadme(
-        challenge_title = challenge_folder_name,
+    create_challenge_readme_model = ChallengeInfo(
+        title = challenge.title,
+        description = challenge.description,
         readme = readme_content,
     )
     db.add(create_challenge_readme_model)
@@ -91,10 +94,15 @@ async def get_challenges(db: db_dependency):
         })
     return result
 
-@router.get("/{challenge}/readme")
+@router.get("/challenge/{challenge}")
 async def get_challenge_readme(db: db_dependency, challenge: str):
-    result = [x.readme for x in db.query(ChallengeReadme).where(ChallengeReadme.challenge_title == challenge)][0]
-    return result
+    challenge_info = [x for x in db.query(ChallengeInfo).where(ChallengeInfo.title == challenge)][0]
+    return {
+        "id": challenge_info.id, 
+        "title": challenge_info.title,
+        "description": challenge_info.description,
+        "readme": challenge_info.readme
+    }
 
 
 # TODO: Tylko admin może tworzyć challenge
