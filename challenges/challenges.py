@@ -66,7 +66,7 @@ async def create_challenge_details(db: db_dependency, challenge_file:UploadFile 
     challenge = challenges_helper.load_challenge_from_temp(db)
     challenges_helper.check_file_extension(challenge_file)
     temp_zip_path = await challenges_helper.save_zip_file(challenge_file)
-    challenge_folder_name = await challenges_helper.extract_challenge(db, challenge.title, temp_zip_path, challenges_dir)
+    challenge_folder_name = await challenges_helper.extract_challenge(challenge.title, temp_zip_path, challenges_dir)
     readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
     readme_content = readme.read()
     create_challenge_readme_model = ChallengeInfo(

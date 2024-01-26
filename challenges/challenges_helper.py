@@ -56,7 +56,7 @@ async def save_zip_file(challenge_file):
 def check_challenge_folder_name(challenge_title, challenge_name):
     return not challenge_title == challenge_name
 
-async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
+async def extract_challenge(challenge_title, temp_zip_path, challenges_dir):
     required_files = ["README.md", "dev-0/expected.tsv", "test-A/expected.tsv"]
     with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
         challenge_name = zip_ref.filelist[0].filename[:-1]

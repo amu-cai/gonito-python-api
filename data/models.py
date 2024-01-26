@@ -35,3 +35,7 @@ class ChallengeInfo(Base):
     description = Column(String)
     readme = Column(UnicodeText)
 
+class Submission(Base):
+    __tablename__ = 'submission'
+
+    id = Column(Integer, primary_key=True, index=True)
