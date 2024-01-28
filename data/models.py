@@ -39,3 +39,9 @@ class Submission(Base):
     __tablename__ = 'submission'
 
     id = Column(Integer, primary_key=True, index=True)
+    challenge = Column(String, ForeignKey("challenges.title"))
+    submitter = Column(String, unique=True)
+    description = Column(String)
+    dev_result = Column(String)
+    test_result = Column(String)
+    when = Column(String)

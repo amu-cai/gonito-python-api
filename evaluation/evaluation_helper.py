@@ -33,3 +33,19 @@ async def extract_submission(temp_zip_path):
         for file in required_files:
             zip_ref.extract(f"{challenge_name}/{file}", submission_dir)
     os.remove(temp_zip_path)
+
+def check_repo_url(repo_url):
+    if repo_url == "":
+        raise HTTPException(status_code=401, detail='Bad repo url')
+
+def check_submitter(submitter):
+    if submitter == "":
+        submitter = "anonymous"
+    return submitter
+
+def check_description(description):
+    return description
+
+def check_challenge_title(challenge_title):
+    if challenge_title == "":
+        raise HTTPException(status_code=401, detail='Bad challenge title')
