@@ -86,6 +86,7 @@ async def get_all_entries(db: db_dependency, challenge: str):
         result.append({
             "id": submission.id,
             "submitter": submission.submitter,
+            "description": submission.description,
             "dev_result": submission.dev_result,
             "test_result": submission.test_result,
             "when": submission.when,
