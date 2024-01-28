@@ -1,8 +1,6 @@
 import zipfile
 import os
-from glob import glob
 from fastapi import HTTPException
-from data.models import Submission
 from secrets import token_hex
 import json
 
@@ -11,10 +9,12 @@ data = json.load(f)
 STORE = data['store_path']
 challenges_dir = f"{STORE}/challenges"
 
+
 def check_file_extension(file):
     file_ext = file.filename.split(".").pop()
     if file_ext != "zip":
         raise HTTPException(status_code=401, detail='Bad extension')
+
 
 async def save_zip_file(file):
     file_name = token_hex(10)
@@ -24,6 +24,7 @@ async def save_zip_file(file):
         content = await file.read()
         f.write(content)
     return temp_zip_path
+
 
 async def extract_submission(temp_zip_path):
     required_files = ["dev-0/out.tsv", "test-A/out.tsv"]
