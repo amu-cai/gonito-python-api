@@ -83,9 +83,9 @@ async def submit(db: db_dependency, submit_input_model: SubmitInputModel):
 async def get_metrics():
     return await evaluation.get_metrics()
 
-@evaluation_router.get("/{challenge}/all-entries")
-async def get_all_entries(db: db_dependency, challenge: str):
-    return await evaluation.get_all_entries(db=db, challenge=challenge)
+@evaluation_router.get("/{challenge}/all-submissions")
+async def get_all_submissions(db: db_dependency, challenge: str):
+    return await evaluation.get_all_submissions(db=db, challenge=challenge)
 
 app.include_router(auth_router)
 app.include_router(challenges_router)

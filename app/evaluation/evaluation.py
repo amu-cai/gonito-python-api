@@ -42,7 +42,7 @@ async def get_metrics():
     result =  [{"name": "Accuracy"}, {"name": "Precision"}]
     return result
 
-async def get_all_entries(db, challenge: str):
+async def get_all_submissions(db, challenge: str):
     result = []
     submissions = db.query(Submission).where(Submission.challenge == challenge)
     for submission in submissions:
