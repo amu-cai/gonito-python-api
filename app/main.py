@@ -1,0 +1,100 @@
+from typing import Annotated
+from fastapi import Depends, FastAPI, status, HTTPException, APIRouter
+from sqlalchemy.orm import Session
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm
+from fastapi import UploadFile, File
+from evaluation.models import SubmitInputModel
+from challenges.models import ChallengeInputModel
+from auth.models import CreateUserRequest, Token
+import auth.auth as auth
+import challenges.challenges as challenges
+import evaluation.evaluation as evaluation
+import database_sqlite.database_sqlite as db_sqlite
+from database_sqlite import models as sqlite_models
+
+app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+sqlite_models.Base.metadata.create_all(bind=db_sqlite.engine)
+
+def get_db():
+    db = db_sqlite.SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+db_dependency = Annotated[Session, Depends(get_db)]
+
+auth_router = APIRouter(
+    prefix="/auth",
+    tags=['auth']
+)
+
+@auth_router.post("/create_user", status_code=status.HTTP_201_CREATED)
+async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
+    return await auth.create_user(db, create_user_request)
+
+@auth_router.post("/token", response_model=Token)
+async def login_for_access_token(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    return await auth.login_for_access_token(db=db, form_data=form_data)
+
+challenges_router = APIRouter(
+    prefix="/challenges",
+    tags=['challenges']
+)
+
+@challenges_router.post("/create-challenge")
+async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
+    return await challenges.create_challenge(db=db, challenge_input_model=challenge_input_model)
+
+@challenges_router.post("/create-challenge-details")
+async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
+    return await challenges.create_challenge_details(db=db, challenge_file=challenge_file)
+
+@challenges_router.get("/get-challenges")
+async def get_challenges(db: db_dependency):
+    return await challenges.get_challenges(db=db)
+
+@challenges_router.get("/challenge/{challenge}")
+async def get_challenge_readme(db: db_dependency, challenge: str):
+    return await challenges.get_challenge_readme(db=db, challenge=challenge)
+
+evaluation_router = APIRouter(
+    prefix="/evaluation",
+    tags=['evaluation']
+)
+
+@evaluation_router.post("/submit")
+async def submit(db: db_dependency, submit_input_model: SubmitInputModel):
+    return await evaluation.submit(db=db, submit_input_model=submit_input_model)
+
+@evaluation_router.get("/get-metrics")
+async def get_metrics():
+    return await evaluation.get_metrics()
+
+@evaluation_router.get("/{challenge}/all-entries")
+async def get_all_entries(db: db_dependency, challenge: str):
+    return await evaluation.get_all_entries(db=db, challenge=challenge)
+
+app.include_router(auth_router)
+app.include_router(challenges_router)
+app.include_router(evaluation_router)
+user_dependency = Annotated[dict, Depends(auth.get_current_user)]
+
+@app.get("/", status_code=status.HTTP_200_OK)
+async def user(user: user_dependency):
+    if user is None:
+        raise HTTPException(status_code=401, detail='Authentication Failed')
+    return {"User": user}
+

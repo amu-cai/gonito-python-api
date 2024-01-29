@@ -1,20 +1,13 @@
 from datetime import timedelta, datetime
 from typing import Annotated
-from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel
+from fastapi import Depends, HTTPException
 from starlette import status
-from data.database import SessionLocal
-from data.models import Users
+from database_sqlite.models import Users
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
+from auth.models import CreateUserRequest
 import json
- 
-router = APIRouter(
-    prefix="/auth",
-    tags=['auth']
-)
 
 f = open('configure.json')
 data = json.load(f)
@@ -23,21 +16,6 @@ ALGORITHM = data['algorithm']
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
-
-class CreateUserRequest(BaseModel):
-    username: str
-    password: str
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 def authenticate_user(username: str, password: str, db):
     user = db.query(Users).filter(Users.username == username).first()
@@ -66,10 +44,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate user.')
 
-db_dependency = Annotated[Session, Depends(get_db)]
-
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
+async def create_user(db, create_user_request: CreateUserRequest):
     users_exist = len(db.query(Users).offset(0).limit(1).all()) > 0
     is_admin = False
     if not users_exist:
@@ -82,9 +57,9 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
     db.add(create_user_model)
     db.commit()
 
-@router.post("/token", response_model=Token)
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-                                 db: db_dependency):
+    return {'message': "challege created!"}
+
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db):
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,

@@ -1,26 +1,8 @@
-from fastapi import APIRouter, Depends, UploadFile, File
-from data.models import Metric, Submission
-from data.database import SessionLocal
-from sqlalchemy.orm import Session
-from typing import Annotated
+from database_sqlite.models import Submission
 import evaluation.evaluation_helper as evaluation_helper
-from pydantic import BaseModel
-import requests
 from datetime import datetime
-
-router = APIRouter(
-    prefix="/evaluation",
-    tags=['evaluation']
-)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-db_dependency = Annotated[Session, Depends(get_db)]
+from evaluation.models import SubmitInputModel
+import requests
 
 # @router.post("/submit")
 # async def submit(db: db_dependency, submission_file:UploadFile = File(...)):
@@ -30,14 +12,7 @@ db_dependency = Annotated[Session, Depends(get_db)]
 #     challenge_folder_name = await evaluation_helper.extract_submission(temp_zip_path)
 #     return result
 
-class SubmitInputModel(BaseModel):
-    challenge_title: str
-    submitter: str
-    description: str
-    repo_url: str
-
-@router.post("/submit")
-async def submit(db: db_dependency, submit_input_model: SubmitInputModel):
+async def submit(db, submit_input_model: SubmitInputModel):
     challenge = submit_input_model.challenge_title
     submitter = submit_input_model.submitter
     repo_url = submit_input_model.repo_url
@@ -63,23 +38,11 @@ async def submit(db: db_dependency, submit_input_model: SubmitInputModel):
     db.commit()
     return {"success": True, "submission": description, "message": "Submission added successfully"}
 
-@router.get("/get-metrics")
-async def get_metrics(db: db_dependency):
-    result = []
-    if len(db.query(Metric).all()) == 0:
-        basic_metrics = [Metric(name = "Accuracy"), Metric(name = "Recall"), Metric(name = "Precision"), Metric(name = "F-score")]
-        for metric in basic_metrics:
-            db.add(metric)
-            db.commit()
-    for metric in db.query(Metric).all():
-        result.append({
-            "id": metric.id,
-            "name": metric.name,
-        })
+async def get_metrics():
+    result =  [{"name": "Accuracy"}, {"name": "Precision"}]
     return result
 
-@router.get("/{challenge}/all-entries")
-async def get_all_entries(db: db_dependency, challenge: str):
+async def get_all_entries(db, challenge: str):
     result = []
     submissions = db.query(Submission).where(Submission.challenge == challenge)
     for submission in submissions:

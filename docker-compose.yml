@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  db:
+    build: ./database/
+    environment:
+      POSTGRES_PASSWORD: secret-test
+      POSTGRES_USER: user-test
+      POSTGRES_DB: gonito-test
+      DB_USER: user-test
+      DB_PASS: secret-test
+    ports:
+      - 5432:5432
+    volumes:
+      - ./database/create_fixtures.sql:/docker-entrypoint-initdb.d/create_fixtures.sql
+  app:
+    build: ./app/
+    depends_on:
+      - db
+    ports:
+      - 8000:8000
