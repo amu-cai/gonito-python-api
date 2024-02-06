@@ -13,6 +13,6 @@ CREATE TABLE IF NOT EXISTS challenges (
 	main_metric VARCHAR (50) NOT NULL,
 	best_score VARCHAR (50) NOT NULL,
     deadline VARCHAR (50) NOT NULL,
-	award VARCHAR (50) NOT NULL,
+    award VARCHAR (50) NOT NULL,
     readme VARCHAR NOT NULL
 );

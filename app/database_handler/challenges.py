@@ -1,5 +1,6 @@
 from database_handler.base_table import Base
 
+from pydantic import BaseModel
 from sqlalchemy.sql import text
 from sqlalchemy import (
     Column,
@@ -24,14 +25,36 @@ class Challenge(Base):
     best_score = Column(String)
     deadline = Column(String)
     award = Column(String)
+    readme = Column(String)
+
+
+class ChallengeInput(BaseModel):
+    title: str
+    type: str
+    description: str | None
+    main_metric: str
+    best_score: str
+    deadline: str | None
+    award: str | None
+    readme: str | None
 
 
 async def insert_challenge(
     async_session: async_sessionmaker[AsyncSession],
-    challenge: Challenge,
+    input: ChallengeInput,
 ) -> None:
-    async with async_session() as session:
-        session.add_all([challenge])
+    async with async_session as session:
+        challenge_to_insert = Challenge(
+            title=input.title,
+            type=input.type,
+            description=input.description,
+            main_metric=input.main_metric,
+            best_score=input.best_score,
+            deadline=input.deadline,
+            award=input.award,
+            readme=input.readme,
+        )
+        session.add_all([challenge_to_insert])
         await session.commit()
 
 
