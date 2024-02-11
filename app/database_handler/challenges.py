@@ -1,7 +1,6 @@
 from database_handler.base_table import Base
 
 from pydantic import BaseModel
-from sqlalchemy.sql import text
 from sqlalchemy import (
     Column,
     Integer,
@@ -27,6 +26,9 @@ class Challenge(Base):
     award = Column(String)
     readme = Column(String)
 
+    def to_dict(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
 
 class ChallengeInput(BaseModel):
     title: str
@@ -39,7 +41,21 @@ class ChallengeInput(BaseModel):
     readme: str | None
 
 
-async def insert_challenge(
+async def challenge_exists(
+    async_session: async_sessionmaker[AsyncSession],
+    title: str,
+) -> bool:
+    async with async_session as session:
+        challenge_exists = (
+            await session.execute(
+                select(Challenge.title).filter_by(title=title)
+            )
+        ).fetchone() is not None
+
+    return challenge_exists
+
+
+async def create_challenge(
     async_session: async_sessionmaker[AsyncSession],
     input: ChallengeInput,
 ) -> None:
@@ -58,24 +74,26 @@ async def insert_challenge(
         await session.commit()
 
 
-async def get_all_challenges(
+async def all_challenges(
     async_session: async_sessionmaker[AsyncSession]
-) -> None:
-    async with async_session() as session:
-        result = await session.execute(select(Challenge.id))
+) -> list[Challenge]:
+    async with async_session as session:
+        challenges = await session.execute(select(Challenge))
 
-    return result.fetchall()
+    return challenges.scalars().all()
 
 
 async def update_challenge_best_score(
     async_session: async_sessionmaker[AsyncSession],
-    id: int,
+    title: str,
     new_best_score: str,
 ) -> None:
-    async with async_session() as session:
-        await session.execute(text(
-            """UPDATE challenges
-                  SET best_score = 'aaaaaaaaa'
-                WHERE id = 1"""
-        ))
+    async with async_session as session:
+        challenge_to_update = (
+            await session.execute(
+                select(Challenge).filter_by(title=title)
+            )
+        ).scalars().one()
+
+        challenge_to_update.best_score = new_best_score
         await session.commit()

@@ -1,28 +1,39 @@
-from typing import Annotated
-from fastapi import Depends, FastAPI, status, HTTPException
-# import auth.auth
-# import challenges.challenges_helper as challenges_helper
-# import challenges.challenges
-# from auth.auth import get_current_user
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi import UploadFile, File
-from datetime import timedelta, datetime
-from pydantic import BaseModel
-# from data.models import Users
-from passlib.context import CryptContext
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
-from jose import jwt, JWTError
 import json
 
+from typing import Annotated
+
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    UploadFile,
+    File,
+    status,
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from datetime import timedelta, datetime
+from pydantic import BaseModel
+from passlib.context import CryptContext
+from jose import jwt, JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database_handler.challenges import ChallengeInput
 from database_handler.db_connection import get_engine, get_session
 from database_handler.base_table import Base
 from database_handler.challenges import (
-    Challenge,
-    insert_challenge,
+    ChallengeInput,
+    challenge_exists,
+    create_challenge,
+    all_challenges,
+    update_challenge_best_score,
 )
+from database_handler.users import (
+    UserInput,
+    user_exists,
+    create_user,
+    user,
+)
+
 import evaluation.evaluation_helper as evaluation_helper
 
 app = FastAPI()
@@ -81,17 +92,65 @@ db_dependency = Annotated[AsyncSession, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(get_current_user)]
 
 
-@app.get("/", status_code=status.HTTP_200_OK)
-async def user(user: user_dependency, db: db_dependency):
-    if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
-    return {"User": user}
+###############################################################################
+# challenges
+
+# TODO: Only admin can create challenge
+@app.post("/create-challenge", status_code=201)
+async def post_create_challenge(db: db_dependency, input: ChallengeInput):
+    if not await challenge_exists(db, input.title):
+        await create_challenge(db, input)
+    else:
+        message = f"Challenge {input.title} already exists"
+        raise HTTPException(status_code=422, detail=message)
 
 
-@app.post("/insert_challenge")
-async def post_insert_challenge(db: db_dependency, input: ChallengeInput):
-    await insert_challenge(db, input)
+@app.get("/all-challenges", status_code=200)
+async def get_all_challenges(db: db_dependency):
+    raw_challenges = await all_challenges(db)
+    dict_challenges = [x.to_dict() for x in raw_challenges]
 
+    return dict_challenges
+
+
+@app.post("/change-challenge-best-score", status_code=200)
+async def post_change_challenge_best_score(
+    db: db_dependency,
+    title: str,
+    new_best_score: str,
+):
+    if await challenge_exists(db, title):
+        await update_challenge_best_score(db, title, new_best_score)
+    else:
+        message = f"Challenge {title} does not exist"
+        raise HTTPException(status_code=422, detail=message)
+
+
+###############################################################################
+# users
+
+@app.post("/create-user", status_code=201)
+async def post_create_user(db: db_dependency, input: UserInput):
+    if not await user_exists(db, input.username):
+        await create_user(db, input)
+    else:
+        message = f"User {input.username} already exists"
+        raise HTTPException(status_code=422, detail=message)
+
+
+@app.get("/user")
+async def get_user(db: db_dependency, username: str):
+    user_data = await user(db, username)
+
+    if user_data:
+        return user_data.to_dict()
+    else:
+        message = f"User {username} does not exist"
+        raise HTTPException(status_code=404, detail=message)
+
+
+###############################################################################
+# submissions
 
 @app.post("/submit")
 async def submit(db: db_dependency, submission_file: UploadFile = File(...)):
@@ -102,6 +161,10 @@ async def submit(db: db_dependency, submission_file: UploadFile = File(...)):
     return result
 
 
+###############################################################################
+# metrics
+
+# TODO
 @app.get("/get-metrics")
 async def get_metrics(db: db_dependency):
     result = [{"name": "Accuracy"}, {"name": "F1"}]
@@ -110,23 +173,9 @@ async def get_metrics(db: db_dependency):
 
 ###############################################################################
 # AUTH
-class CreateUserRequest(BaseModel):
-    username: str
-    password: str
-
-
 class Token(BaseModel):
     access_token: str
     token_type: str
-
-
-def authenticate_user(username: str, password: str, db):
-    user = db.query(Users).filter(Users.username == username).first()
-    if not user:
-        return False
-    if not bcrypt_context.verify(password, user.hashed_password):
-        return False
-    return user
 
 
 def create_access_token(username: str, user_id: int, expires_delta: timedelta):
@@ -134,21 +183,6 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     expires = datetime.utcnow() + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
-
-
-@app.post("/", status_code=status.HTTP_201_CREATED)
-async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
-    users_exist = len(db.query(Users).offset(0).limit(1).all()) > 0
-    is_admin = False
-    if not users_exist:
-        is_admin = True
-    create_user_model = Users(
-        username=create_user_request.username,
-        hashed_password=bcrypt_context.hash(create_user_request.password),
-        is_admin=is_admin
-    )
-    db.add(create_user_model)
-    db.commit()
 
 
 @app.post("/token", response_model=Token)
@@ -163,93 +197,6 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     return {'access_token': token, 'token_type': 'bearer'}
 # AUTH
 ###############################################################################
-###############################################################################
-# CHALLENGES
-
-
-"""
-class ChallengeInputModel(BaseModel):
-    title: str
-    description: str | None = None
-    type: str
-    main_metric: str
-    deadline: str | None = None
-    award: str | None = None
-
-
-@app.post("/create-challenge")
-async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
-    challenges_helper.check_challenge_title(challenge_input_model.title)
-    challenges_helper.check_challenge_already_in_db(db, challenge_input_model.title)
-    challenge_temp_path = f"{STORE}/temp/challenge_created"
-    Path(challenge_temp_path).mkdir(parents=True, exist_ok=True)
-    temp_challenge_created = f"{challenge_temp_path}/{challenge_input_model.title}"
-    print(temp_challenge_created)
-    with open(temp_challenge_created, "a") as f:
-        f.write(challenge_input_model.title)
-    best_score = "0"
-    create_challenge_model = Challenge(
-        title = challenge_input_model.title,
-        type = challenge_input_model.type,
-        description = challenge_input_model.description,
-        main_metric = challenge_input_model.main_metric,
-        best_score = best_score,
-        deadline = challenge_input_model.deadline,
-        award = challenge_input_model.award,
-    )
-    db.add(create_challenge_model)
-    db.commit()
-    return {"success": True, "challenge": challenge_input_model.title, "message": "Challenge data added successfully"}
-
-
-@app.post("/create-challenge-details")
-async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
-    challenge = challenges_helper.load_challenge_from_temp(db)
-    challenges_helper.check_file_extension(challenge_file)
-    temp_zip_path = await challenges_helper.save_zip_file(challenge_file)
-    challenge_folder_name = await challenges_helper.extract_challenge(challenge.title, temp_zip_path, challenges_dir)
-    readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
-    readme_content = readme.read()
-    create_challenge_readme_model = ChallengeInfo(
-        title = challenge.title,
-        description = challenge.description,
-        readme = readme_content,
-    )
-    db.add(create_challenge_readme_model)
-    db.commit()
-    return {"success": True, "challenge": challenge_folder_name, "message": "Challenge uploaded successfully"}
-
-
-@app.get("/get-challenges")
-async def get_challenges(db: db_dependency):
-    result = []
-    for challenge in db.query(Challenge).all():
-        result.append({
-            "id": challenge.id,
-            "title": challenge.title,
-            "type": challenge.type,
-            "description": challenge.description,
-            "mainMetric": challenge.main_metric,
-            "bestScore": challenge.best_score,
-            "deadline": challenge.deadline,
-            "award": challenge.award,
-        })
-    return result
-
-
-@app.get("/challenge/{challenge}")
-async def get_challenge_readme(db: db_dependency, challenge: str):
-    challenge_info = [x for x in db.query(ChallengeInfo).where(ChallengeInfo.title == challenge)][0]
-    return {
-        "id": challenge_info.id, 
-        "title": challenge_info.title,
-        "description": challenge_info.description,
-        "readme": challenge_info.readme
-    }
-"""
-
-
-# TODO: Tylko admin może tworzyć challenge
-# TODO: Poprawić kody błędów
-# TODO: Readme wsadzić do bazy i wykorzystać w challenge/readme
-# TODO: Stworzenie challenge'a poprzez adres url githuba ??? (i tak musi być niewidoczne test-A/expected.tsv)
+# TODOS
+# - Readme wsadzić do bazy i wykorzystać w challenge/readme
+# - Stworzenie challenge'a poprzez adres url githuba ??? (i tak musi być niewidoczne test-A/expected.tsv)
