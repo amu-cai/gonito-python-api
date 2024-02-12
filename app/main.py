@@ -123,7 +123,7 @@ async def post_change_challenge_best_score(
         await update_challenge_best_score(db, title, new_best_score)
     else:
         message = f"Challenge {title} does not exist"
-        raise HTTPException(status_code=422, detail=message)
+        raise HTTPException(status_code=404, detail=message)
 
 
 ###############################################################################
@@ -152,6 +152,7 @@ async def get_user(db: db_dependency, username: str):
 ###############################################################################
 # submissions
 
+# TODO
 @app.post("/submit")
 async def submit(db: db_dependency, submission_file: UploadFile = File(...)):
     result = []
