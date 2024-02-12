@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import Depends, FastAPI, status, HTTPException, APIRouter
+from fastapi import Depends, FastAPI, status, HTTPException, APIRouter, Form
 from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -76,8 +76,8 @@ evaluation_router = APIRouter(
 )
 
 @evaluation_router.post("/submit")
-async def submit(db: db_dependency, submit_input_model: SubmitInputModel):
-    return await evaluation.submit(db=db, submit_input_model=submit_input_model)
+async def submit(db: db_dependency, description: Annotated[str, Form()], submission_file: UploadFile = File(...)):
+    return await evaluation.submit(db=db, submission_file=submission_file, description=description)
 
 @evaluation_router.get("/get-metrics")
 async def get_metrics():
