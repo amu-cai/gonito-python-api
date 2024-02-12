@@ -1,4 +1,5 @@
 __pycache__
 *.db
 configure.json
-
+app/*/challenges/*
+app/*/temp/*
