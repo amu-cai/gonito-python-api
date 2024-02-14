@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   db:
     build: ./database/
@@ -12,9 +12,10 @@ services:
       - 5432:5432
     volumes:
       - ./database/create_fixtures.sql:/docker-entrypoint-initdb.d/create_fixtures.sql
-  app:
+
+  app :
     build: ./app/
     depends_on:
       - db
     ports:
-      - 8000:8000
+      - 80:80
