@@ -32,25 +32,25 @@ engine = get_engine()
 session = get_session(engine)
 
 # prototype db
-sqlite_models.Base.metadata.create_all(bind=db_sqlite.engine)
-def get_db():
-    db = db_sqlite.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-db_dependency = Annotated[Session, Depends(get_db)]
-
-# postgre async db
-# async def get_db():
-#     async with engine.begin() as conn:
-#         await conn.run_sync(Base.metadata.create_all)
-
-#     db = session()
+# sqlite_models.Base.metadata.create_all(bind=db_sqlite.engine)
+# def get_db():
+#     db = db_sqlite.SessionLocal()
 #     try:
 #         yield db
 #     finally:
-#         await db.close()
+#         db.close()
+# db_dependency = Annotated[Session, Depends(get_db)]
+
+# postgre async db
+async def get_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    db = session()
+    try:
+        yield db
+    finally:
+        await db.close()
 
 db_dependency = Annotated[AsyncSession, Depends(get_db)]
 
