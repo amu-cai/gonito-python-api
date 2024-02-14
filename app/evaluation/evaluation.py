@@ -2,7 +2,6 @@ from database_sqlite.models import Submission
 import evaluation.evaluation_helper as evaluation_helper
 from datetime import datetime
 from evaluation.models import SubmitInputModel
-import requests
 from fastapi import UploadFile, File, Form
 import zipfile
 
