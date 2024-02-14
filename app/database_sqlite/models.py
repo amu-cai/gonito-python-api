@@ -26,6 +26,7 @@ class Challenge(Base):
     best_score = Column(String)
     deadline = Column(String)
     award = Column(String)
+    readme = Column(UnicodeText)
 
 class ChallengeInfo(Base):
     __tablename__ = 'challenge_info'

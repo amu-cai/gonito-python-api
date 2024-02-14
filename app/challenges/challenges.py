@@ -39,18 +39,12 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession], chal
         best_score = best_score,
         deadline = challenge_input_model.deadline,
         award = challenge_input_model.award,
-    )
-
-    create_challenge_readme_model = ChallengeInfo(
-        title = challenge_title,
-        description = challenge_input_model.description,
-        readme = readme_content,
+        readme = readme_content
     )
 
     async with async_session as session:
         session.add(create_challenge_model)
-        session.add(create_challenge_readme_model)
-        session.commit()
+        await session.commit()
 
     return {"success": True, "challenge": challenge_folder_name, "message": "Challenge uploaded successfully"}
 

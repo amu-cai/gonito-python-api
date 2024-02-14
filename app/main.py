@@ -94,6 +94,7 @@ async def create_challenge(db: db_dependency,
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
     raw_challenges = await challenges.all_challenges(db)
+    print(raw_challenges)
     dict_challenges = [x.to_dict() for x in raw_challenges]
     return dict_challenges
 
