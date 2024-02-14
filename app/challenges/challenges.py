@@ -54,8 +54,19 @@ async def all_challenges(
 ) -> list[Challenge]:
     async with async_session as session:
         challenges = await session.execute(select(Challenge))
-
-    return challenges.scalars().all()
+    result = []
+    for challenge in challenges.scalars().all():
+        result.append({
+            "id": challenge.id,
+            "title": challenge.title,
+            "type": challenge.type,
+            "description": challenge.description,
+            "mainMetric": challenge.main_metric,
+            "bestScore": challenge.best_score,
+            "deadline": challenge.deadline,
+            "award": challenge.award,
+        })
+    return result
 
 async def get_challenge_readme(async_session, challenge: str):
     async with async_session as session:
