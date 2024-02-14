@@ -37,7 +37,7 @@ def check_repo_url(repo_url):
         raise HTTPException(status_code=401, detail='Bad repo url')
 
 def check_submitter(submitter):
-    if submitter == "":
+    if submitter == "x":
         submitter = "anonymous"
     return submitter
 

@@ -4,6 +4,7 @@ from datetime import datetime
 from evaluation.models import SubmitInputModel
 import requests
 from fastapi import UploadFile, File, Form
+import zipfile
 
 # @router.post("/submit")
 # async def submit(db: db_dependency, submission_file:UploadFile = File(...)):
@@ -13,33 +14,42 @@ from fastapi import UploadFile, File, Form
 #     challenge_folder_name = await evaluation_helper.extract_submission(temp_zip_path)
 #     return result
 
-async def submit(db, description, submission_file:UploadFile = File(...)):
-    print(submission_file.headers)
+async def submit(db, description, challenge_title, submitter, submission_file:UploadFile = File(...)):
+    evaluation_helper.check_challenge_title(challenge_title)
+    submitter = evaluation_helper.check_submitter(submitter)
+    description = evaluation_helper.check_description(description)
+
     print(description)
 
-    # challenge = submit_input_model.challenge_title
-    # submitter = submit_input_model.submitter
-    # repo_url = submit_input_model.repo_url
-    # description = submit_input_model.description
-    # evaluation_helper.check_repo_url(repo_url)
-    # evaluation_helper.check_challenge_title(challenge)
-    # submitter = evaluation_helper.check_submitter(submitter)
-    # description = evaluation_helper.check_description(description)
+    print(submission_file)
+
+    print(submitter)
+
+    print(challenge_title)
+
+
+
     # dev_out = requests.get(repo_url + "/raw/branch/master/dev-0/out.tsv").text
     # test_out = requests.get(repo_url + "/raw/branch/master/test-A/out.tsv").text
     # dev_result = dev_out.replace('\r', '').split('\n')[0]
     # test_result = test_out.replace('\r', '').split('\n')[0]
-    # when = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
-    # create_submission_model = Submission(
-    #     challenge = challenge,
-    #     submitter = submitter,
-    #     description = description,
-    #     dev_result = dev_result,
-    #     test_result = test_result,
-    #     when = when,
-    # )
-    # db.add(create_submission_model)
-    # db.commit()
+    required_files = ["README.md", "dev-0/expected.tsv", "test-A/expected.tsv"]
+    # with zipfile.ZipFile(submission_file, 'r') as zip_ref:
+    #     submission_title = zip_ref.filelist[0].filename[:-1]
+    #     print(submission_title)
+
+
+    when = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+    create_submission_model = Submission(
+        challenge = "challenge_title",
+        submitter = "submitter",
+        description = description,
+        dev_result = "dev_result",
+        test_result = "test_result",
+        when = when,
+    )
+    db.add(create_submission_model)
+    db.commit()
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
 
 async def get_metrics():
