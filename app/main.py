@@ -89,7 +89,7 @@ async def create_challenge(db: db_dependency,
         deadline = deadline,
         award = award,
     )
-    return await challenges.create_challenge(db=db, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
+    return await challenges.create_challenge(async_session=db, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
 
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
