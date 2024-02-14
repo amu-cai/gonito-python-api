@@ -91,13 +91,11 @@ async def create_challenge(db: db_dependency,
     )
     return await challenges.create_challenge(db=db, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
 
-# @challenges_router.post("/create-challenge-details")
-# async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
-#     return await challenges.create_challenge_details(db=db, challenge_file=challenge_file)
-
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
-    return await challenges.get_challenges(db=db)
+    raw_challenges = await challenges.all_challenges(db)
+    dict_challenges = [x.to_dict() for x in raw_challenges]
+    return dict_challenges
 
 @challenges_router.get("/challenge/{challenge}")
 async def get_challenge_readme(db: db_dependency, challenge: str):

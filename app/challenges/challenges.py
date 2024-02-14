@@ -4,6 +4,13 @@ from pathlib import Path
 import challenges.challenges_helper as challenges_helper
 from challenges.models import ChallengeInputModel
 import json
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    AsyncSession,
+)
+from sqlalchemy import (
+    select,
+)
 
 f = open('configure.json')
 data = json.load(f)
@@ -11,12 +18,18 @@ STORE = data['store_path']
 
 challenges_dir = f"{STORE}/challenges"
 
-async def create_challenge(db, challenge_input_model: ChallengeInputModel, challenge_file:UploadFile = File(...)):
+async def create_challenge(async_session: async_sessionmaker[AsyncSession], challenge_input_model: ChallengeInputModel, challenge_file:UploadFile = File(...)):
     challenge_title = challenge_input_model.title
     challenges_helper.check_challenge_title(challenge_title)
-    challenges_helper.check_challenge_already_in_db(db, challenge_title)
+    await challenges_helper.challenge_exists(async_session, challenge_title)
 
     best_score = "0"
+
+    challenges_helper.check_file_extension(async_session, challenge_file, challenge_title)
+    temp_zip_path = await challenges_helper.save_zip_file(challenge_file)
+    challenge_folder_name = await challenges_helper.extract_challenge(async_session, challenge_title, temp_zip_path, challenges_dir)
+    readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
+    readme_content = readme.read()
 
     create_challenge_model = Challenge(
         title = challenge_title,
@@ -27,50 +40,39 @@ async def create_challenge(db, challenge_input_model: ChallengeInputModel, chall
         deadline = challenge_input_model.deadline,
         award = challenge_input_model.award,
     )
-    db.add(create_challenge_model)
-    db.commit()
 
-    challenges_helper.check_file_extension(db, challenge_file, challenge_title)
-    temp_zip_path = await challenges_helper.save_zip_file(challenge_file)
-    challenge_folder_name = await challenges_helper.extract_challenge(db, challenge_title, temp_zip_path, challenges_dir)
-    readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
-    readme_content = readme.read()
     create_challenge_readme_model = ChallengeInfo(
         title = challenge_title,
         description = challenge_input_model.description,
         readme = readme_content,
     )
-    db.add(create_challenge_readme_model)
-    db.commit()
+
+    async with async_session as session:
+        session.add(create_challenge_model)
+        session.add(create_challenge_readme_model)
+        session.commit()
 
     return {"success": True, "challenge": challenge_folder_name, "message": "Challenge uploaded successfully"}
 
-async def get_challenges(db):
-    result = []
-    for challenge in db.query(Challenge).all():
-        result.append({
-            "id": challenge.id,
-            "title": challenge.title,
-            "type": challenge.type,
-            "description": challenge.description,
-            "mainMetric": challenge.main_metric,
-            "bestScore": challenge.best_score,
-            "deadline": challenge.deadline,
-            "award": challenge.award,
-        })
-    return result
 
-async def get_challenge_readme(db, challenge: str):
-    challenge_info = [x for x in db.query(ChallengeInfo).where(ChallengeInfo.title == challenge)][0]
+async def all_challenges(
+    async_session: async_sessionmaker[AsyncSession]
+) -> list[Challenge]:
+    async with async_session as session:
+        challenges = await session.execute(select(Challenge))
+
+    return challenges.scalars().all()
+
+async def get_challenge_readme(async_session, challenge: str):
+    async with async_session as session:
+        challenge_info = (
+                await session.execute(
+                    select(Challenge).filter_by(title=challenge)
+                )
+            ).scalars().one()
     return {
         "id": challenge_info.id, 
         "title": challenge_info.title,
         "description": challenge_info.description,
         "readme": challenge_info.readme
     }
-
-
-# TODO: Tylko admin może tworzyć challenge
-# TODO: Poprawić kody błędów
-# TODO: Readme wsadzić do bazy i wykorzystać w challenge/readme
-# TODO: Stworzenie challenge'a poprzez adres url githuba ??? (i tak musi być niewidoczne test-A/expected.tsv)

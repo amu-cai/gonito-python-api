@@ -12,7 +12,7 @@ challenges_dir = f"{STORE}/challenges"
 def check_file_extension(file):
     file_ext = file.filename.split(".").pop()
     if file_ext != "zip":
-        raise HTTPException(status_code=401, detail='Bad extension')
+        raise HTTPException(status_code=422, detail='Bad extension')
 
 async def save_zip_file(file):
     file_name = token_hex(10)
@@ -34,7 +34,7 @@ async def extract_submission(temp_zip_path):
 
 def check_repo_url(repo_url):
     if repo_url == "":
-        raise HTTPException(status_code=401, detail='Bad repo url')
+        raise HTTPException(status_code=422, detail='Bad repo url')
 
 def check_submitter(submitter):
     if submitter == "x":
@@ -46,4 +46,4 @@ def check_description(description):
 
 def check_challenge_title(challenge_title):
     if challenge_title == "":
-        raise HTTPException(status_code=401, detail='Bad challenge title')
+        raise HTTPException(status_code=422, detail='Bad challenge title')

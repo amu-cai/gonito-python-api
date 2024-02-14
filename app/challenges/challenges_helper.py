@@ -6,37 +6,53 @@ from database_sqlite.models import Challenge
 from secrets import token_hex
 import json
 from shutil import rmtree
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    AsyncSession,
+)
+from sqlalchemy import (
+    select,
+)
 
 f = open('configure.json')
 data = json.load(f)
 STORE = data['store_path']
 challenges_dir = f"{STORE}/challenges"
 
-def check_challenge_already_in_db(db, challenge_title):
-    current_challenges_db = [challenge.title for challenge in db.query(Challenge).all()]
-    if challenge_title in current_challenges_db:
-        raise HTTPException(status_code=401, detail='Challenge has been already created!')
+async def challenge_exists(
+    async_session: async_sessionmaker[AsyncSession],
+    title: str,
+) -> bool:
+    async with async_session as session:
+        challenge_exists = (
+            await session.execute(
+                select(Challenge.title).filter_by(title=title)
+            )
+        ).fetchone() is not None
+    if challenge_exists:
+        raise HTTPException(status_code=422, detail='Challenge has been already created!')
 
 def check_challenge_title(challenge_title):
     if challenge_title == "":
-        raise HTTPException(status_code=401, detail='Invalid challenge title')
+        raise HTTPException(status_code=422, detail='Invalid challenge title')
 
-def delete_challenge_by_title(db, challenge_title):
-    challenge_id = [challenge.id for challenge in db.query(Challenge).where(Challenge.title == challenge_title)][0]
-    challenge = db.get(Challenge, challenge_id)
-    db.delete(challenge)
-    db.commit()
+async def delete_challenge_by_title(async_session, challenge_title):
+    async with async_session as session:
+        challenge_id = [challenge.id for challenge in session.query(Challenge).where(Challenge.title == challenge_title)][0]
+        challenge = session.get(Challenge, challenge_id)
+        session.delete(challenge)
+        session.commit()
 
 def check_challenge_already_in_store(challenge_folder_name):
     current_challenges = [x.replace(f"{challenges_dir}\\", '') for x in glob(f"{challenges_dir}/*")]
     if challenge_folder_name in current_challenges:
         return True
 
-def check_file_extension(db, file, challenge_title):
+def check_file_extension(async_session: async_sessionmaker[AsyncSession], file, challenge_title):
     file_ext = file.filename.split(".").pop()
     if file_ext != "zip":
-        delete_challenge_by_title(db, challenge_title)
-        raise HTTPException(status_code=401, detail='Bad extension')
+        delete_challenge_by_title(async_session, challenge_title)
+        raise HTTPException(status_code=422, detail='Bad extension')
 
 def check_challenge_structure(zip_ref, challenge_name):
     challenge_files = [file_obj.filename for file_obj in zip_ref.filelist]
@@ -57,7 +73,7 @@ async def save_zip_file(challenge_file):
 def check_challenge_folder_name(challenge_title, challenge_name):
     return not challenge_title == challenge_name
 
-async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
+async def extract_challenge(async_session: async_sessionmaker[AsyncSession], challenge_title, temp_zip_path, challenges_dir):
     required_files = ["README.md", "dev-0/expected.tsv", "test-A/expected.tsv"]
     with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
         challenge_name = zip_ref.filelist[0].filename[:-1]
@@ -69,26 +85,14 @@ async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
     os.remove(temp_zip_path)
     if folder_name_error:
         rmtree(f"{challenges_dir}/{challenge_name}")
-        delete_challenge_by_title(db, challenge_title)
-        raise HTTPException(status_code=401, detail='Invalid challenge folder name - is not equal to challenge title')
+        delete_challenge_by_title(async_session, challenge_title)
+        raise HTTPException(status_code=422, detail='Invalid challenge folder name - is not equal to challenge title')
     if challenge_already_exist_error:
         rmtree(f"{challenges_dir}/{challenge_name}")
-        delete_challenge_by_title(db, challenge_title)
-        raise HTTPException(status_code=401, detail='Challenge already exist in store!')
+        delete_challenge_by_title(async_session, challenge_title)
+        raise HTTPException(status_code=422, detail='Challenge already exist in store!')
     if structure_error:
         rmtree(f"{challenges_dir}/{challenge_name}")
-        delete_challenge_by_title(db, challenge_title)
-        raise HTTPException(status_code=401, detail=f'Bad challenge structure! Challenge required files: {str(required_files)}')
+        delete_challenge_by_title(async_session, challenge_title)
+        raise HTTPException(status_code=422, detail=f'Bad challenge structure! Challenge required files: {str(required_files)}')
     return challenge_name
-
-def load_challenge_from_temp(db):
-    challenge_title_path = [x.replace("\\", '/') for x in glob(f"{STORE}/temp/challenge_created/*")]
-    if len(challenge_title_path):
-        challenge_title_path = challenge_title_path[0]
-        challenge_title = challenge_title_path.split("/")[-1]
-        challenge_id = [challenge.id for challenge in db.query(Challenge).where(Challenge.title == challenge_title)][0]
-        challenge = db.get(Challenge, challenge_id)
-        os.remove(challenge_title_path)
-        return challenge
-    else:
-        raise HTTPException(status_code=401, detail='There is no challenge meta data to load')
