@@ -73,12 +73,27 @@ challenges_router = APIRouter(
 )
 
 @challenges_router.post("/create-challenge")
-async def create_challenge(db: db_dependency, challenge_input_model: ChallengeInputModel):
-    return await challenges.create_challenge(db=db, challenge_input_model=challenge_input_model)
+async def create_challenge(db: db_dependency, 
+                            challenge_title: Annotated[str, Form()], 
+                            description: Annotated[str, Form()] = "", 
+                            deadline: Annotated[str, Form()] = "",
+                            award: Annotated[str, Form()] = "", 
+                            type: Annotated[str, Form()] = "",
+                            metric: Annotated[str, Form()] = "",
+                            challenge_file:UploadFile = File(...)):
+    challenge_input_model: ChallengeInputModel = ChallengeInputModel(
+        title = challenge_title,
+        description = description,
+        type = type,
+        main_metric = metric,
+        deadline = deadline,
+        award = award,
+    )
+    return await challenges.create_challenge(db=db, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
 
-@challenges_router.post("/create-challenge-details")
-async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
-    return await challenges.create_challenge_details(db=db, challenge_file=challenge_file)
+# @challenges_router.post("/create-challenge-details")
+# async def create_challenge_details(db: db_dependency, challenge_file:UploadFile = File(...)):
+#     return await challenges.create_challenge_details(db=db, challenge_file=challenge_file)
 
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):

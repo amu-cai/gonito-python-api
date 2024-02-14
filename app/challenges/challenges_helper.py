@@ -83,7 +83,6 @@ async def extract_challenge(db, challenge_title, temp_zip_path, challenges_dir):
 
 def load_challenge_from_temp(db):
     challenge_title_path = [x.replace("\\", '/') for x in glob(f"{STORE}/temp/challenge_created/*")]
-    print(challenge_title_path)
     if len(challenge_title_path):
         challenge_title_path = challenge_title_path[0]
         challenge_title = challenge_title_path.split("/")[-1]
