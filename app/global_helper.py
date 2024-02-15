@@ -17,7 +17,7 @@ STORE = data['store_path']
 challenges_dir = f"{STORE}/challenges"
 
 def check_challenge_in_store(challenge_folder_name):
-    current_challenges = [x.replace(f"{challenges_dir}\\", '') for x in glob(f"{challenges_dir}/*")]
+    current_challenges = [x.replace(f"{challenges_dir}/", '') for x in glob(f"{challenges_dir}/*")]
     if challenge_folder_name in current_challenges:
         return True
 

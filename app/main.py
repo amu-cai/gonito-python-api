@@ -106,7 +106,7 @@ evaluation_router = APIRouter(
 
 @evaluation_router.post("/submit")
 async def submit(db: db_dependency, description: Annotated[str, Form()], challenge_title: Annotated[str, Form()], submitter: Annotated[str, Form()], submission_file: UploadFile = File(...)):
-    return await evaluation.submit(db=db, submission_file=submission_file, submitter=submitter, challenge_title=challenge_title, description=description)
+    return await evaluation.submit(async_session=db, submission_file=submission_file, submitter=submitter, challenge_title=challenge_title, description=description)
 
 @evaluation_router.get("/get-metrics")
 async def get_metrics():

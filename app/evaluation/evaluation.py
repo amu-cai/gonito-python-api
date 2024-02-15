@@ -20,7 +20,7 @@ async def submit(async_session, description, challenge_title, submitter, submiss
     test_result = 0
 
     required_submission_files = ["dev-0/out.tsv", "test-A/out.tsv"]
-    with zipfile.ZipFile(submission_file, 'r') as zip_ref:
+    with zipfile.ZipFile(temp_zip_path, 'r') as zip_ref:
         challenge_name = zip_ref.filelist[0].filename[:-1]
 
         folder_name_error = not challenge_title == challenge_name
@@ -32,11 +32,11 @@ async def submit(async_session, description, challenge_title, submitter, submiss
                 if file.filename == f"{challenge_name}/dev-0/out.tsv":
                     with zip_ref.open(file, "r") as file_content:
                         # TODO: evaluation
-                        dev_result = file_content.split('\n')[0]
+                        dev_result = file_content.read().split('\n')[0]
                 if file.filename == f"{challenge_name}/test-A/out.tsv":
                     with zip_ref.open(file, "r") as file_content:
                         # TODO: evaluation
-                        test_result = file_content.split('\n')[0]
+                        test_result = file_content.read().split('\n')[0]
                     
     os.remove(temp_zip_path)
 
@@ -58,8 +58,11 @@ async def submit(async_session, description, challenge_title, submitter, submiss
         test_result = test_result,
         when = when,
     )
-    async_session.add(create_submission_model)
-    async_session.commit()
+
+    async with async_session as session:
+        session.add(create_submission_model)
+        await session.commit()
+
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
 
 async def get_metrics():
