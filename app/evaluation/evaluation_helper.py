@@ -43,7 +43,3 @@ def check_submitter(submitter):
 
 def check_description(description):
     return description
-
-def check_challenge_title(challenge_title):
-    if challenge_title == "":
-        raise HTTPException(status_code=422, detail='Bad challenge title')

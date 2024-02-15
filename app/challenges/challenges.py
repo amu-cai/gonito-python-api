@@ -1,6 +1,5 @@
-from fastapi import UploadFile, File
-from database_sqlite.models import Challenge, ChallengeInfo
-from pathlib import Path
+from fastapi import UploadFile, File, HTTPException
+from database_sqlite.models import Challenge
 import challenges.challenges_helper as challenges_helper
 from challenges.models import ChallengeInputModel
 import json
@@ -11,6 +10,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import (
     select,
 )
+from app.global_helper import check_challenge_exists, save_zip_file
 
 f = open('configure.json')
 data = json.load(f)
@@ -21,12 +21,14 @@ challenges_dir = f"{STORE}/challenges"
 async def create_challenge(async_session: async_sessionmaker[AsyncSession], challenge_input_model: ChallengeInputModel, challenge_file:UploadFile = File(...)):
     challenge_title = challenge_input_model.title
     challenges_helper.check_challenge_title(challenge_title)
-    await challenges_helper.challenge_exists(async_session, challenge_title)
+    challenge_exists = await check_challenge_exists(async_session, challenge_title)
+    if challenge_exists:
+        raise HTTPException(status_code=422, detail=f'{challenge_title} challenge has been already created!')
 
     best_score = "0"
 
     challenges_helper.check_file_extension(async_session, challenge_file, challenge_title)
-    temp_zip_path = await challenges_helper.save_zip_file(challenge_file)
+    temp_zip_path = await save_zip_file(challenge_file)
     challenge_folder_name = await challenges_helper.extract_challenge(async_session, challenge_title, temp_zip_path, challenges_dir)
     readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
     readme_content = readme.read()

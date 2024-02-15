@@ -1,54 +1,65 @@
 from database_sqlite.models import Submission
 import evaluation.evaluation_helper as evaluation_helper
 from datetime import datetime
-from evaluation.models import SubmitInputModel
-from fastapi import UploadFile, File, Form
+from fastapi import UploadFile, File, Form, HTTPException
 import zipfile
+from app.global_helper import check_challenge_in_store, check_zip_structure, save_zip_file, check_challenge_exists
+import os
 
-# @router.post("/submit")
-# async def submit(db: db_dependency, submission_file:UploadFile = File(...)):
-#     result = []
-#     evaluation_helper.check_file_extension(submission_file)
-#     temp_zip_path = await evaluation_helper.save_zip_file(submission_file)
-#     challenge_folder_name = await evaluation_helper.extract_submission(temp_zip_path)
-#     return result
+async def submit(async_session, description, challenge_title, submitter, submission_file:UploadFile = File(...)):
+    challenge_exists = await check_challenge_exists(async_session, challenge_title)
+    if not challenge_exists:
+        raise HTTPException(status_code=422, detail=f'{challenge_title} challenge not exist!')
 
-async def submit(db, description, challenge_title, submitter, submission_file:UploadFile = File(...)):
-    evaluation_helper.check_challenge_title(challenge_title)
     submitter = evaluation_helper.check_submitter(submitter)
     description = evaluation_helper.check_description(description)
 
-    print(description)
+    temp_zip_path = await save_zip_file(submission_file)
 
-    print(submission_file)
+    dev_result = 0
+    test_result = 0
 
-    print(submitter)
+    required_submission_files = ["dev-0/out.tsv", "test-A/out.tsv"]
+    with zipfile.ZipFile(submission_file, 'r') as zip_ref:
+        challenge_name = zip_ref.filelist[0].filename[:-1]
 
-    print(challenge_title)
+        folder_name_error = not challenge_title == challenge_name
+        challenge_not_exist_error = not check_challenge_in_store(challenge_name)
+        structure_error = check_zip_structure(zip_ref, challenge_name, required_submission_files)
 
+        if True not in [folder_name_error, challenge_not_exist_error, structure_error]:
+            for file in zip_ref.filelist:
+                if file.filename == f"{challenge_name}/dev-0/out.tsv":
+                    with zip_ref.open(file, "r") as file_content:
+                        # TODO: evaluation
+                        dev_result = file_content.split('\n')[0]
+                if file.filename == f"{challenge_name}/test-A/out.tsv":
+                    with zip_ref.open(file, "r") as file_content:
+                        # TODO: evaluation
+                        test_result = file_content.split('\n')[0]
+                    
+    os.remove(temp_zip_path)
 
+    if folder_name_error:
+        raise HTTPException(status_code=422, detail=f'Invalid challenge folder name "{challenge_name}" - is not equal to challenge title "{challenge_title}"')
 
-    # dev_out = requests.get(repo_url + "/raw/branch/master/dev-0/out.tsv").text
-    # test_out = requests.get(repo_url + "/raw/branch/master/test-A/out.tsv").text
-    # dev_result = dev_out.replace('\r', '').split('\n')[0]
-    # test_result = test_out.replace('\r', '').split('\n')[0]
-    required_files = ["README.md", "dev-0/expected.tsv", "test-A/expected.tsv"]
-    # with zipfile.ZipFile(submission_file, 'r') as zip_ref:
-    #     submission_title = zip_ref.filelist[0].filename[:-1]
-    #     print(submission_title)
+    if challenge_not_exist_error:
+        raise HTTPException(status_code=422, detail=f'Challenge "{challenge_name}" not exist in store!')
 
+    if structure_error:
+        raise HTTPException(status_code=422, detail=f'Bad challenge structure! Challenge required files: {str(required_submission_files)}')
 
     when = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
     create_submission_model = Submission(
-        challenge = "challenge_title",
-        submitter = "submitter",
+        challenge = challenge_title,
+        submitter = submitter,
         description = description,
-        dev_result = "dev_result",
-        test_result = "test_result",
+        dev_result = dev_result,
+        test_result = test_result,
         when = when,
     )
-    db.add(create_submission_model)
-    db.commit()
+    async_session.add(create_submission_model)
+    async_session.commit()
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
 
 async def get_metrics():
