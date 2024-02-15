@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import (
     select,
 )
-from app.global_helper import check_challenge_exists, save_zip_file
+from global_helper import check_challenge_exists, save_zip_file
 
 f = open('configure.json')
 data = json.load(f)

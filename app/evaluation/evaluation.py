@@ -3,7 +3,7 @@ import evaluation.evaluation_helper as evaluation_helper
 from datetime import datetime
 from fastapi import UploadFile, File, Form, HTTPException
 import zipfile
-from app.global_helper import check_challenge_in_store, check_zip_structure, save_zip_file, check_challenge_exists
+from global_helper import check_challenge_in_store, check_zip_structure, save_zip_file, check_challenge_exists
 import os
 
 async def submit(async_session, description, challenge_title, submitter, submission_file:UploadFile = File(...)):
