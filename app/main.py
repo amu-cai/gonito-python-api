@@ -112,9 +112,9 @@ async def submit(db: db_dependency, description: Annotated[str, Form()], challen
 async def get_metrics():
     return await evaluation.get_metrics()
 
-@evaluation_router.get("/{challenge}/all-submissions")
+@evaluation_router.get("/{challenge}/all-submissions/")
 async def get_all_submissions(db: db_dependency, challenge: str):
-    return await evaluation.get_all_submissions(db=db, challenge=challenge)
+    return await evaluation.get_all_submissions(async_session=db, challenge=challenge)
 
 app.include_router(auth_router)
 app.include_router(challenges_router)

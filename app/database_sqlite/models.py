@@ -45,4 +45,4 @@ class Submission(Base):
     description = Column(String)
     dev_result = Column(String)
     test_result = Column(String)
-    when = Column(String)
+    timestamp = Column(String)

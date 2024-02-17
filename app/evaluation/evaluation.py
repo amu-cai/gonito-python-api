@@ -5,6 +5,15 @@ from fastapi import UploadFile, File, Form, HTTPException
 import zipfile
 from global_helper import check_challenge_in_store, check_zip_structure, save_zip_file, check_challenge_exists
 import os
+import json
+from sqlalchemy import (
+    select,
+)
+
+f = open('configure.json')
+data = json.load(f)
+STORE = data['store_path']
+challenges_dir = f"{STORE}/challenges"
 
 async def submit(async_session, description, challenge_title, submitter, submission_file:UploadFile = File(...)):
     challenge_exists = await check_challenge_exists(async_session, challenge_title)
@@ -31,13 +40,34 @@ async def submit(async_session, description, challenge_title, submitter, submiss
             for file in zip_ref.filelist:
                 if file.filename == f"{challenge_name}/dev-0/out.tsv":
                     with zip_ref.open(file, "r") as file_content:
-                        # TODO: evaluation
-                        dev_result = file_content.read().split('\n')[0]
+                        dev_from_challenge = open(f"{challenges_dir}/{challenge_name}/dev-0/expected.tsv", "r")
+                        from_challenge_num = int(dev_from_challenge.readlines()[0])
+
+                        print("from_challenge_num")
+                        print(from_challenge_num)
+
+                        from_submission_num = int(file_content.readlines()[0])
+
+                        print("from_submission_num")
+                        print(from_submission_num)
+
+                        dev_result = from_challenge_num + from_submission_num
+
                 if file.filename == f"{challenge_name}/test-A/out.tsv":
                     with zip_ref.open(file, "r") as file_content:
-                        # TODO: evaluation
-                        test_result = file_content.read().split('\n')[0]
-                    
+                        test_from_challenge = open(f"{challenges_dir}/{challenge_name}/test-A/expected.tsv", "r")
+                        from_challenge_num = int(test_from_challenge.readlines()[0])
+
+                        print("from_challenge_num")
+                        print(from_challenge_num)
+
+                        from_submission_num = int(file_content.readlines()[0])
+
+                        print("from_submission_num")
+                        print(from_submission_num)
+
+                        test_result = from_challenge_num + from_submission_num
+
     os.remove(temp_zip_path)
 
     if folder_name_error:
@@ -49,14 +79,15 @@ async def submit(async_session, description, challenge_title, submitter, submiss
     if structure_error:
         raise HTTPException(status_code=422, detail=f'Bad challenge structure! Challenge required files: {str(required_submission_files)}')
 
-    when = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+    timestamp = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+
     create_submission_model = Submission(
         challenge = challenge_title,
         submitter = submitter,
         description = description,
-        dev_result = dev_result,
-        test_result = test_result,
-        when = when,
+        dev_result = str(dev_result),
+        test_result = str(test_result),
+        timestamp = timestamp,
     )
 
     async with async_session as session:
@@ -69,16 +100,19 @@ async def get_metrics():
     result =  [{"name": "Accuracy"}, {"name": "Precision"}]
     return result
 
-async def get_all_submissions(db, challenge: str):
+async def get_all_submissions(async_session, challenge: str):
     result = []
-    submissions = db.query(Submission).where(Submission.challenge == challenge)
-    for submission in submissions:
+
+    async with async_session as session:
+        submissions = await session.execute(select(Submission))
+
+    for submission in submissions.scalars().all():
         result.append({
             "id": submission.id,
             "submitter": submission.submitter,
             "description": submission.description,
             "dev_result": submission.dev_result,
             "test_result": submission.test_result,
-            "when": submission.when,
+            "timestamp": submission.timestamp,
         })
     return result

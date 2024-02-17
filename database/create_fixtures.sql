@@ -16,3 +16,13 @@ CREATE TABLE IF NOT EXISTS challenges (
     award VARCHAR (50) NOT NULL,
     readme VARCHAR NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS submission (
+    id serial PRIMARY KEY,
+    challenge VARCHAR (50) UNIQUE NOT NULL,
+	submitter VARCHAR (50) NOT NULL,
+	description VARCHAR (50) NOT NULL,
+	dev_result VARCHAR (50) NOT NULL,
+	test_result VARCHAR (50) NOT NULL,
+    timestamp VARCHAR (50) NOT NULL
+);

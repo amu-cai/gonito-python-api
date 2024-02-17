@@ -43,10 +43,7 @@ async def extract_challenge(async_session: async_sessionmaker[AsyncSession], cha
         challenge_already_exist_error = check_challenge_in_store(challenge_name)
         structure_error = check_zip_structure(zip_ref, challenge_name, required_challenge_files)
 
-        print(True not in [folder_name_error, challenge_already_exist_error, structure_error])
-        print([folder_name_error, challenge_already_exist_error, structure_error])
         if True not in [folder_name_error, challenge_already_exist_error, structure_error]:
-            print("SDADDASASDASDSDAASDASDSDASDSD ELO ELOs")
             for file in required_challenge_files:
                 zip_ref.extract(f"{challenge_name}/{file}", challenges_dir)
 
