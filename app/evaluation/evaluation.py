@@ -39,34 +39,30 @@ async def submit(async_session, description, challenge_title, submitter, submiss
         if True not in [folder_name_error, challenge_not_exist_error, structure_error]:
             for file in zip_ref.filelist:
                 if file.filename == f"{challenge_name}/dev-0/out.tsv":
-                    with zip_ref.open(file, "r") as file_content:
-                        dev_from_challenge = open(f"{challenges_dir}/{challenge_name}/dev-0/expected.tsv", "r")
-                        from_challenge_num = int(dev_from_challenge.readlines()[0])
+                    with zip_ref.open(file, "r") as submission_out_content:
+                        dev_file_from_challenge = open(f"{challenges_dir}/{challenge_name}/dev-0/expected.tsv", "r")
+                        challenge_results = [float(line) for line in dev_file_from_challenge.readlines()]
+                        submission_results = [float(line) for line in submission_out_content.readlines()]
+                        print("challenge_results")
+                        print(challenge_results)
+                        print("submission_results")
+                        print(submission_results)
 
-                        print("from_challenge_num")
-                        print(from_challenge_num)
-
-                        from_submission_num = int(file_content.readlines()[0])
-
-                        print("from_submission_num")
-                        print(from_submission_num)
-
-                        dev_result = from_challenge_num + from_submission_num
+                        # dev_result = rmse(challenge_results, submission_results)
+                        dev_result = "x"
 
                 if file.filename == f"{challenge_name}/test-A/out.tsv":
-                    with zip_ref.open(file, "r") as file_content:
-                        test_from_challenge = open(f"{challenges_dir}/{challenge_name}/test-A/expected.tsv", "r")
-                        from_challenge_num = int(test_from_challenge.readlines()[0])
+                    with zip_ref.open(file, "r") as submission_out_content:
+                        test_file_from_challenge = open(f"{challenges_dir}/{challenge_name}/test-A/expected.tsv", "r")
+                        challenge_results = [float(line) for line in test_file_from_challenge.readlines()]
+                        submission_results = [float(line) for line in submission_out_content.readlines()]
+                        print("challenge_results")
+                        print(challenge_results)
+                        print("submission_results")
+                        print(submission_results)
 
-                        print("from_challenge_num")
-                        print(from_challenge_num)
-
-                        from_submission_num = int(file_content.readlines()[0])
-
-                        print("from_submission_num")
-                        print(from_submission_num)
-
-                        test_result = from_challenge_num + from_submission_num
+                        # dev_result = rmse(challenge_results, submission_results)
+                        dev_result = "x"
 
     os.remove(temp_zip_path)
 

@@ -31,16 +31,6 @@ app.add_middleware(
 engine = get_engine()
 session = get_session(engine)
 
-# prototype db
-# sqlite_models.Base.metadata.create_all(bind=db_sqlite.engine)
-# def get_db():
-#     db = db_sqlite.SessionLocal()
-#     try:
-#         yield db
-#     finally:
-#         db.close()
-# db_dependency = Annotated[Session, Depends(get_db)]
-
 # postgre async db
 async def get_db():
     async with engine.begin() as conn:
@@ -93,7 +83,7 @@ async def create_challenge(db: db_dependency,
 
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
-    return await challenges.all_challenges(db)
+    return await challenges.all_challenges(async_session=db)
 
 @challenges_router.get("/challenge/{challenge}")
 async def get_challenge_readme(db: db_dependency, challenge: str):
