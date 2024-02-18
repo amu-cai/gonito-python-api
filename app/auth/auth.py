@@ -8,6 +8,13 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from auth.models import CreateUserRequest
 import json
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    AsyncSession,
+)
+from sqlalchemy import (
+    select,
+)
 
 f = open('configure.json')
 data = json.load(f)
@@ -17,8 +24,9 @@ ALGORITHM = data['algorithm']
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
-def authenticate_user(username: str, password: str, db):
-    user = db.query(Users).filter(Users.username == username).first()
+async def authenticate_user(username: str, password: str, async_session: AsyncSession):
+    async with async_session as session:
+        user = await session.execute(select(Users)).filter_by(title=username).scalars().one()
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):
@@ -44,23 +52,28 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate user.')
 
-async def create_user(db, create_user_request: CreateUserRequest):
-    users_exist = len(db.query(Users).offset(0).limit(1).all()) > 0
+async def create_user(async_session, create_user_request: CreateUserRequest):
+    async with async_session as session:
+        users_exist = len(await session.execute(select(Users)).scalars().one()) > 0
+
     is_admin = False
     if not users_exist:
         is_admin = True
+        
     create_user_model = Users(
         username=create_user_request.username,
         hashed_password=bcrypt_context.hash(create_user_request.password),
         is_admin=is_admin
     )
-    db.add(create_user_model)
-    db.commit()
+
+    async with async_session as session:
+        async_session.add(create_user_model)
+        await session.commit()
 
     return {'message': "challege created!"}
 
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db):
-    user = authenticate_user(form_data.username, form_data.password, db)
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], async_session):
+    user = authenticate_user(form_data.username, form_data.password, async_session)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate user.')

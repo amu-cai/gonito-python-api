@@ -51,11 +51,11 @@ auth_router = APIRouter(
 
 @auth_router.post("/create_user", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
-    return await auth.create_user(db, create_user_request)
+    return await auth.create_user(async_session=db, create_user_request=create_user_request)
 
 @auth_router.post("/token", response_model=Token)
 async def login_for_access_token(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    return await auth.login_for_access_token(db=db, form_data=form_data)
+    return await auth.login_for_access_token(async_session=db, form_data=form_data)
 
 challenges_router = APIRouter(
     prefix="/challenges",
