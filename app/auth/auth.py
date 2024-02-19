@@ -54,7 +54,8 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 async def create_user(async_session, create_user_request: CreateUserRequest):
     async with async_session as session:
-        users_exist = len(await session.execute(select(Users)).scalars().one()) > 0
+        users = (await session.execute(select(Users))).scalars().all()
+        users_exist = len(users) > 0
 
     is_admin = False
     if not users_exist:
@@ -70,7 +71,7 @@ async def create_user(async_session, create_user_request: CreateUserRequest):
         async_session.add(create_user_model)
         await session.commit()
 
-    return {'message': "challege created!"}
+    return {'message': f"user {create_user_model.username} created!"}
 
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], async_session):
     user = authenticate_user(form_data.username, form_data.password, async_session)
