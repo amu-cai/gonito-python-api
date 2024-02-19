@@ -9,6 +9,7 @@ import json
 from sqlalchemy import (
     select,
 )
+from metrics.rmse import rmse
 
 f = open('configure.json')
 data = json.load(f)
@@ -43,26 +44,14 @@ async def submit(async_session, description, challenge_title, submitter, submiss
                         dev_file_from_challenge = open(f"{challenges_dir}/{challenge_name}/dev-0/expected.tsv", "r")
                         challenge_results = [float(line) for line in dev_file_from_challenge.readlines()]
                         submission_results = [float(line) for line in submission_out_content.readlines()]
-                        print("challenge_results")
-                        print(challenge_results)
-                        print("submission_results")
-                        print(submission_results)
-
-                        # dev_result = rmse(challenge_results, submission_results)
-                        dev_result = "x"
+                        dev_result = rmse(challenge_results, submission_results)
 
                 if file.filename == f"{challenge_name}/test-A/out.tsv":
                     with zip_ref.open(file, "r") as submission_out_content:
                         test_file_from_challenge = open(f"{challenges_dir}/{challenge_name}/test-A/expected.tsv", "r")
                         challenge_results = [float(line) for line in test_file_from_challenge.readlines()]
                         submission_results = [float(line) for line in submission_out_content.readlines()]
-                        print("challenge_results")
-                        print(challenge_results)
-                        print("submission_results")
-                        print(submission_results)
-
-                        # dev_result = rmse(challenge_results, submission_results)
-                        dev_result = "x"
+                        test_result = rmse(challenge_results, submission_results)
 
     os.remove(temp_zip_path)
 
