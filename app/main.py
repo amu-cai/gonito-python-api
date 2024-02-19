@@ -1,17 +1,13 @@
 from typing import Annotated
 from fastapi import Depends, FastAPI, status, HTTPException, APIRouter, Form
-from sqlalchemy.orm import Session
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import UploadFile, File
-from evaluation.models import SubmitInputModel
 from challenges.models import ChallengeInputModel
 from auth.models import CreateUserRequest, Token
 import auth.auth as auth
 import challenges.challenges as challenges
 import evaluation.evaluation as evaluation
-import database_sqlite.database_sqlite as db_sqlite
-from database_sqlite import models as sqlite_models
 from database_handler.db_connection import get_engine, get_session
 from database_handler.base_table import Base
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -53,7 +49,7 @@ auth_router = APIRouter(
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     return await auth.create_user(async_session=db, create_user_request=create_user_request)
 
-@auth_router.post("/token", response_model=Token)
+@auth_router.post("/login", response_model=Token)
 async def login_for_access_token(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return await auth.login_for_access_token(async_session=db, form_data=form_data)
 
@@ -111,7 +107,7 @@ app.include_router(challenges_router)
 app.include_router(evaluation_router)
 user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 
-@app.get("/", status_code=status.HTTP_200_OK)
+@app.get("/auth", status_code=status.HTTP_200_OK)
 async def user(user: user_dependency):
     if user is None:
         raise HTTPException(status_code=401, detail='Authentication Failed')

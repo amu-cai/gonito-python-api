@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import (
     select,
 )
+from auth.auth_helper import valid_email, valid_password, valid_username
 
 f = open('configure.json')
 data = json.load(f)
@@ -24,9 +25,9 @@ ALGORITHM = data['algorithm']
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
-async def authenticate_user(username: str, password: str, async_session: AsyncSession):
+async def authenticate_user(username: str, password: str, async_session: async_sessionmaker[AsyncSession]):
     async with async_session as session:
-        user = await session.execute(select(Users)).filter_by(title=username).scalars().one()
+        user = (await session.execute(select(Users).filter_by(username=username))).scalars().one()
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):
@@ -52,16 +53,36 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate user.')
 
-async def create_user(async_session, create_user_request: CreateUserRequest):
+async def create_user(async_session: async_sessionmaker[AsyncSession], create_user_request: CreateUserRequest):
     async with async_session as session:
         users = (await session.execute(select(Users))).scalars().all()
         users_exist = len(users) > 0
+        username = (await session.execute(select(Users).filter_by(username=create_user_request.username))).scalars().all()
+        username_already_exist = len(username) > 0
+        email = (await session.execute(select(Users).filter_by(email=create_user_request.email))).scalars().all()
+        email_already_exist = len(email) > 0
 
+    if username_already_exist:
+        raise HTTPException(status_code=422, detail=f'Username {create_user_request.username} already exist!')
+
+    if email_already_exist:
+        raise HTTPException(status_code=422, detail=f'Account with email {create_user_request.email} already exist!')
+    
+    if not valid_username(create_user_request.username):
+        raise HTTPException(status_code=422, detail=f'Username is required!')
+    
+    if not valid_password(create_user_request.password):
+        raise HTTPException(status_code=422, detail=f'Password must have at least 10 characters')
+    
+    if not valid_email(create_user_request.email):
+        raise HTTPException(status_code=422, detail=f'Invalid email format')
+    
     is_admin = False
     if not users_exist:
         is_admin = True
         
     create_user_model = Users(
+        email=create_user_request.email,
         username=create_user_request.username,
         hashed_password=bcrypt_context.hash(create_user_request.password),
         is_admin=is_admin
@@ -71,10 +92,10 @@ async def create_user(async_session, create_user_request: CreateUserRequest):
         async_session.add(create_user_model)
         await session.commit()
 
-    return {'message': f"user {create_user_model.username} created!"}
+    return {'message': f"user {create_user_request.username} created!"}
 
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], async_session):
-    user = authenticate_user(form_data.username, form_data.password, async_session)
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], async_session: async_sessionmaker[AsyncSession]):
+    user = await authenticate_user(form_data.username, form_data.password, async_session)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Could not validate user.')

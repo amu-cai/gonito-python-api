@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS users (
     id serial PRIMARY KEY,
+    email VARCHAR (50) UNIQUE NOT NULL,
     username VARCHAR (50) UNIQUE NOT NULL,
 	hashed_password VARCHAR NOT NULL,
 	is_admin BOOLEAN NOT NULL
