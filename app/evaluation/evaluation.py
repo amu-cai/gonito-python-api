@@ -10,6 +10,7 @@ from sqlalchemy import (
     select,
 )
 from metrics.rmse import rmse
+from metrics.metrics import Metrics
 
 f = open('configure.json')
 data = json.load(f)
@@ -82,14 +83,15 @@ async def submit(async_session, description, challenge_title, submitter, submiss
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
 
 async def get_metrics():
-    result =  [{"name": "Accuracy"}, {"name": "Precision"}]
+    metrics = Metrics()
+    result = [{"name": value} for value in metrics.__dict__.values()]
     return result
 
 async def get_all_submissions(async_session, challenge: str):
     result = []
 
     async with async_session as session:
-        submissions = await session.execute(select(Submission))
+        submissions = await session.execute(select(Submission).filter_by(challenge=challenge))
 
     for submission in submissions.scalars().all():
         result.append({
