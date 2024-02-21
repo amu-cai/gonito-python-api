@@ -70,7 +70,7 @@ async def all_challenges(
         })
     return result
 
-async def get_challenge_readme(async_session, challenge: str):
+async def get_challenge_info(async_session, challenge: str):
     async with async_session as session:
         challenge_info = (
                 await session.execute(
@@ -80,6 +80,11 @@ async def get_challenge_readme(async_session, challenge: str):
     return {
         "id": challenge_info.id, 
         "title": challenge_info.title,
+        "type": challenge_info.type,
+        "mainMetric": challenge_info.main_metric,
         "description": challenge_info.description,
-        "readme": challenge_info.readme
+        "readme": challenge_info.readme,
+        "bestScore": challenge_info.best_score,
+        "deadline": challenge_info.deadline,
+        "award": challenge_info.award
     }

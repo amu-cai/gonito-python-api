@@ -83,7 +83,7 @@ async def get_challenges(db: db_dependency):
 
 @challenges_router.get("/challenge/{challenge}")
 async def get_challenge_readme(db: db_dependency, challenge: str):
-    return await challenges.get_challenge_readme(async_session=db, challenge=challenge)
+    return await challenges.get_challenge_info(async_session=db, challenge=challenge)
 
 evaluation_router = APIRouter(
     prefix="/evaluation",

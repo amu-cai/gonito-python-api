@@ -27,7 +27,10 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
 async def authenticate_user(username: str, password: str, async_session: async_sessionmaker[AsyncSession]):
     async with async_session as session:
-        user = (await session.execute(select(Users).filter_by(username=username))).scalars().one()
+        try:
+            user = (await session.execute(select(Users).filter_by(username=username))).scalars().one()
+        except:
+            user = False
     if not user:
         return False
     if not bcrypt_context.verify(password, user.hashed_password):
@@ -47,11 +50,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         user_id: int = payload.get('id')
         if username is None or user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail='Could not validate user.')
+                                detail='Incorrect login or password.')
         return {'username': username, 'id': user_id}
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail='Could not validate user.')
+                            detail='Incorrect login or password.')
 
 async def create_user(async_session: async_sessionmaker[AsyncSession], create_user_request: CreateUserRequest):
     async with async_session as session:
@@ -98,7 +101,7 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     user = await authenticate_user(form_data.username, form_data.password, async_session)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                            detail='Could not validate user.')
+                            detail='Incorrect login or password.')
     token = create_access_token(user.username, user.id, timedelta(minutes=20))
 
     return {'access_token': token, 'token_type': 'bearer'}
