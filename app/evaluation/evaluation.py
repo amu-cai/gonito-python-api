@@ -103,3 +103,20 @@ async def get_all_submissions(async_session, challenge: str):
             "timestamp": submission.timestamp,
         })
     return result
+
+
+async def get_my_submissions(async_session, challenge: str, user: str):
+    result = []
+
+    async with async_session as session:
+        submissions = await session.execute(select(Submission).filter_by(challenge=challenge, submitter=user))
+
+    for submission in submissions.scalars().all():
+        result.append({
+            "id": submission.id,
+            "description": submission.description,
+            "dev_result": submission.dev_result,
+            "test_result": submission.test_result,
+            "timestamp": submission.timestamp,
+        })
+    return result

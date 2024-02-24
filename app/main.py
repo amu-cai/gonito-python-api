@@ -102,6 +102,10 @@ async def get_metrics():
 async def get_all_submissions(db: db_dependency, challenge: str):
     return await evaluation.get_all_submissions(async_session=db, challenge=challenge)
 
+@evaluation_router.get("/{challenge}/my-submissions/")
+async def get_all_submissions(db: db_dependency, challenge: str, user: str):
+    return await evaluation.get_my_submissions(async_session=db, challenge=challenge, user=user)
+
 app.include_router(auth_router)
 app.include_router(challenges_router)
 app.include_router(evaluation_router)
