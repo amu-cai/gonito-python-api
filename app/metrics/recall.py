@@ -37,8 +37,8 @@ class Recall(MetricBase):
                 "labels: list | None (default None)",
                 "pos_label: int | float | bool | str (default 1)",
                 "average : str | None (default 'bianry'); ‘micro’, ‘macro’,\
-                        ‘samples’, ‘weighted’, ‘binary’"
-                "sample_weight: list | None (default None)"
+                        ‘samples’, ‘weighted’, ‘binary’",
+                "sample_weight: list | None (default None)",
                 "zero_division : str | float | np.NaN (default 'warn')"
             ]
         }
