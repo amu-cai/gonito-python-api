@@ -105,7 +105,7 @@ async def get_all_submissions(db: db_dependency, challenge: str):
 user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 
 @evaluation_router.get("/{challenge}/my-submissions/")
-async def get_all_submissions(db: db_dependency, challenge: str, user: user_dependency):
+async def get_my_submissions(db: db_dependency, challenge: str, user: user_dependency):
     return await evaluation.get_my_submissions(async_session=db, challenge=challenge, user=user)
 
 app.include_router(auth_router)
