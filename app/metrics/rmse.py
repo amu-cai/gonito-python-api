@@ -21,7 +21,7 @@ class RMSE(MetricBase):
 
     def info(self) -> dict:
         return {
-            "name": "mean squared error",
+            "name": "root mean squared error",
             "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error",
             "parameters": [
                 "sample_weight: list | None (default None)",

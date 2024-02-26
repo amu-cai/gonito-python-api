@@ -31,7 +31,7 @@ class Recall(MetricBase):
 
     def info(self) -> dict:
         return {
-            "name": "accuracy",
+            "name": "recall",
             "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html#sklearn.metrics.recall_score",
             "parameters": [
                 "labels: list | None (default None)",

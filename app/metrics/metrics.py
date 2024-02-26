@@ -6,6 +6,7 @@ from .rmse import RMSE
 from .fbeta_score import FBeta
 from .recall import Recall
 from .precision import Precision
+from .average_precision import AveragePrecision
 
 
 class Metrics(BaseModel):
@@ -16,3 +17,4 @@ class Metrics(BaseModel):
     mse = MSE.info()
     recall = Recall.info()
     precision = Precision.info()
+    average_precision = AveragePrecision.info()
