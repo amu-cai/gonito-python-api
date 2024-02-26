@@ -25,7 +25,7 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession], chal
     if challenge_exists:
         raise HTTPException(status_code=422, detail=f'{challenge_title} challenge has been already created!')
 
-    best_score = "0"
+    best_score = 0
 
     challenges_helper.check_file_extension(async_session, challenge_file, challenge_title)
     temp_zip_path = await save_zip_file(challenge_file)

@@ -108,6 +108,10 @@ user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 async def get_my_submissions(db: db_dependency, challenge: str, user: user_dependency):
     return await evaluation.get_my_submissions(async_session=db, challenge=challenge, user=user)
 
+@evaluation_router.get("/{challenge}/leaderboard/")
+async def get_leaderboard(db: db_dependency, challenge: str):
+    return await evaluation.get_leaderboard(async_session=db, challenge=challenge)
+
 app.include_router(auth_router)
 app.include_router(challenges_router)
 app.include_router(evaluation_router)

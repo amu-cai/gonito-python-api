@@ -1,5 +1,5 @@
 from database_sqlite.database_sqlite import Base
-from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey, Float
 
 class Users(Base):
     __tablename__ = 'users'
@@ -24,7 +24,7 @@ class Challenge(Base):
     type = Column(String)
     description = Column(String)
     main_metric = Column(String)
-    best_score = Column(String)
+    best_score = Column(Float)
     deadline = Column(String)
     award = Column(String)
     readme = Column(UnicodeText)
@@ -44,6 +44,6 @@ class Submission(Base):
     challenge = Column(String, ForeignKey("challenges.title"))
     submitter = Column(String, unique=True)
     description = Column(String)
-    dev_result = Column(String)
-    test_result = Column(String)
+    dev_result = Column(Float)
+    test_result = Column(Float)
     timestamp = Column(String)

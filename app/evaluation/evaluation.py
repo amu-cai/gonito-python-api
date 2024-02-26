@@ -7,10 +7,12 @@ from global_helper import check_challenge_in_store, check_zip_structure, save_zi
 import os
 import json
 from sqlalchemy import (
-    select,
+    select
 )
+from sqlalchemy.sql.expression import func
 from metrics.rmse import rmse
 from metrics.metrics import Metrics
+from collections import defaultdict
 
 f = open('configure.json')
 data = json.load(f)
@@ -71,8 +73,8 @@ async def submit(async_session, description, challenge_title, submitter, submiss
         challenge = challenge_title,
         submitter = submitter,
         description = description,
-        dev_result = str(dev_result),
-        test_result = str(test_result),
+        dev_result = dev_result,
+        test_result = test_result,
         timestamp = timestamp,
     )
 
@@ -119,4 +121,28 @@ async def get_my_submissions(async_session, challenge: str, user):
             "test_result": submission.test_result,
             "timestamp": submission.timestamp,
         })
+    return result
+
+async def get_leaderboard(async_session, challenge: str):
+    result = []
+
+    async with async_session as session:
+        submissions = await session.execute(select(Submission).filter_by(challenge=challenge))
+
+    submissions = submissions.scalars().all()
+    submitters = list(set([submission.submitter for submission in submissions]))
+
+    for submitter in submitters:
+        submitter_submissions = list(filter(lambda submission: submission.submitter == submitter, submissions))
+        max_test_result = max([submission.test_result for submission in submitter_submissions])
+        best_result = list(filter(lambda submission: submission.test_result == max_test_result, submitter_submissions))[0]
+        result.append({
+            "id": best_result.id,
+            "submitter": best_result.submitter,
+            "description": best_result.description,
+            "dev_result": best_result.dev_result,
+            "test_result": best_result.test_result,
+            "timestamp": best_result.timestamp,
+        })
+
     return result

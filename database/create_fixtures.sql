@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS challenges (
 	type VARCHAR (500) NOT NULL,
 	description VARCHAR (500) NOT NULL,
 	main_metric VARCHAR (500) NOT NULL,
-	best_score VARCHAR (500) NOT NULL,
+	best_score FLOAT (50) NOT NULL,
     deadline VARCHAR (500) NOT NULL,
     award VARCHAR (500) NOT NULL,
     readme VARCHAR NOT NULL
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS submission (
     challenge VARCHAR (500) REFERENCES challenges (title),
 	submitter VARCHAR (500) NOT NULL,
 	description VARCHAR (500) NOT NULL,
-	dev_result VARCHAR (500) NOT NULL,
-	test_result VARCHAR (500) NOT NULL,
+	dev_result FLOAT (50) NOT NULL,
+	test_result FLOAT (50) NOT NULL,
     timestamp VARCHAR (50) NOT NULL
 );
