@@ -7,7 +7,6 @@
 - widok readme wyzwania
 - zgłaszanie rozwiązań (podstawowe metryki)
 
-
 ## 29.02.2024
 
 - widok leaderboard
@@ -15,13 +14,13 @@
 - widok how to
 - nowe logowanie/rejestracja
 - nadawanie praw admina przez frontend
-- podstrona zgłoszenia (widoczna przez usera oraz admina)
-
 
 ## 31.03.2024
 
+- usuwanie wyzwań
+- edycja/usuwanie zgłoszeń
 - więcej metryk
-- definicja własnej metryki przez tworzenie wyzwania na froncie
 - nowy landing page frontendu
+- definicja własnej metryki przez tworzenie wyzwania na froncie (?)
 - testowanie systemu
 - dopracowanie systemu
