@@ -7,3 +7,4 @@ class ChallengeInputModel(BaseModel):
     main_metric: str
     deadline: str | None = None
     award: str | None = None
+    challenge_source: str

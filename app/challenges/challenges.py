@@ -37,6 +37,7 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession], user
         author = user["username"],
         title = challenge_title,
         type = challenge_input_model.type,
+        source = challenge_input_model.challenge_source,
         description = challenge_input_model.description,
         main_metric = challenge_input_model.main_metric,
         best_score = best_score,
@@ -85,6 +86,7 @@ async def get_challenge_info(async_session, challenge: str):
         "mainMetric": challenge_info.main_metric,
         "description": challenge_info.description,
         "readme": challenge_info.readme,
+        "source": challenge_info.source,
         "bestScore": challenge_info.best_score,
         "deadline": challenge_info.deadline,
         "award": challenge_info.award

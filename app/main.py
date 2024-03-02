@@ -62,6 +62,7 @@ challenges_router = APIRouter(
 @challenges_router.post("/create-challenge")
 async def create_challenge(db: db_dependency,  user: user_dependency,
                             challenge_title: Annotated[str, Form()], 
+                            challenge_source: Annotated[str, Form()] = "", 
                             description: Annotated[str, Form()] = "", 
                             deadline: Annotated[str, Form()] = "",
                             award: Annotated[str, Form()] = "", 
@@ -71,6 +72,7 @@ async def create_challenge(db: db_dependency,  user: user_dependency,
     await auth.check_user_exists(async_session=db, username=user["username"])
     challenge_input_model: ChallengeInputModel = ChallengeInputModel(
         title = challenge_title,
+        challenge_source = challenge_source,
         description = description,
         type = type,
         main_metric = metric,
