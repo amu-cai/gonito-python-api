@@ -39,6 +39,7 @@ async def get_db():
         await db.close()
 
 db_dependency = Annotated[AsyncSession, Depends(get_db)]
+user_dependency = Annotated[dict, Depends(auth.get_current_user)]
 
 auth_router = APIRouter(
     prefix="/auth",
@@ -59,7 +60,7 @@ challenges_router = APIRouter(
 )
 
 @challenges_router.post("/create-challenge")
-async def create_challenge(db: db_dependency, 
+async def create_challenge(db: db_dependency,  user: user_dependency,
                             challenge_title: Annotated[str, Form()], 
                             description: Annotated[str, Form()] = "", 
                             deadline: Annotated[str, Form()] = "",
@@ -67,6 +68,7 @@ async def create_challenge(db: db_dependency,
                             type: Annotated[str, Form()] = "",
                             metric: Annotated[str, Form()] = "",
                             challenge_file:UploadFile = File(...)):
+    await auth.check_user_exists(async_session=db, username=user["username"])
     challenge_input_model: ChallengeInputModel = ChallengeInputModel(
         title = challenge_title,
         description = description,
@@ -75,7 +77,7 @@ async def create_challenge(db: db_dependency,
         deadline = deadline,
         award = award,
     )
-    return await challenges.create_challenge(async_session=db, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
+    return await challenges.create_challenge(async_session=db, user=user, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
 
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
@@ -91,8 +93,9 @@ evaluation_router = APIRouter(
 )
 
 @evaluation_router.post("/submit")
-async def submit(db: db_dependency, description: Annotated[str, Form()], challenge_title: Annotated[str, Form()], submitter: Annotated[str, Form()], submission_file: UploadFile = File(...)):
-    return await evaluation.submit(async_session=db, submission_file=submission_file, submitter=submitter, challenge_title=challenge_title, description=description)
+async def submit(db: db_dependency, user: user_dependency, description: Annotated[str, Form()], challenge_title: Annotated[str, Form()], submission_file: UploadFile = File(...)):
+    await auth.check_user_exists(async_session=db, username=user["username"])
+    return await evaluation.submit(async_session=db, user=user, submission_file=submission_file, challenge_title=challenge_title, description=description)
 
 @evaluation_router.get("/get-metrics")
 async def get_metrics():
@@ -102,10 +105,9 @@ async def get_metrics():
 async def get_all_submissions(db: db_dependency, challenge: str):
     return await evaluation.get_all_submissions(async_session=db, challenge=challenge)
 
-user_dependency = Annotated[dict, Depends(auth.get_current_user)]
-
 @evaluation_router.get("/{challenge}/my-submissions/")
 async def get_my_submissions(db: db_dependency, challenge: str, user: user_dependency):
+    await auth.check_user_exists(async_session=db, username=user["username"])
     return await evaluation.get_my_submissions(async_session=db, challenge=challenge, user=user)
 
 @evaluation_router.get("/{challenge}/leaderboard/")

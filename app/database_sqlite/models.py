@@ -20,6 +20,7 @@ class Challenge(Base):
     __tablename__ = 'challenges'
 
     id = Column(Integer, primary_key=True, index=True)
+    author = Column(String)
     title = Column(String, unique=True)
     type = Column(String)
     description = Column(String)

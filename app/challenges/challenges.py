@@ -18,7 +18,7 @@ STORE = data['store_path']
 
 challenges_dir = f"{STORE}/challenges"
 
-async def create_challenge(async_session: async_sessionmaker[AsyncSession], challenge_input_model: ChallengeInputModel, challenge_file:UploadFile = File(...)):
+async def create_challenge(async_session: async_sessionmaker[AsyncSession], user, challenge_input_model: ChallengeInputModel, challenge_file:UploadFile = File(...)):
     challenge_title = challenge_input_model.title
     challenges_helper.check_challenge_title(challenge_title)
     challenge_exists = await check_challenge_exists(async_session, challenge_title)
@@ -34,6 +34,7 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession], chal
     readme_content = readme.read()
 
     create_challenge_model = Challenge(
+        author = user["username"],
         title = challenge_title,
         type = challenge_input_model.type,
         description = challenge_input_model.description,

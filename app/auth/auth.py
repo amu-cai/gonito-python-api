@@ -43,6 +43,15 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta):
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
+async def check_user_exists(async_session: async_sessionmaker[AsyncSession], username: str):
+    async with async_session as session:
+        user_exist = len((await session.execute(select(Users).filter_by(username=username))).scalars().all())
+    if user_exist:
+        return True
+    else:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='Incorrect login or password.')
+
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])

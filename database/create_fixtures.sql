@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS challenges (
     id serial PRIMARY KEY,
+    author VARCHAR (500) NOT NULL, 
     title VARCHAR (500) UNIQUE NOT NULL,
 	type VARCHAR (500) NOT NULL,
 	description VARCHAR (500) NOT NULL,

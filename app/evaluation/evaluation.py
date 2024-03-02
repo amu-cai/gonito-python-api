@@ -19,12 +19,12 @@ data = json.load(f)
 STORE = data['store_path']
 challenges_dir = f"{STORE}/challenges"
 
-async def submit(async_session, description, challenge_title, submitter, submission_file:UploadFile = File(...)):
+async def submit(async_session, user, description, challenge_title, submission_file:UploadFile = File(...)):
     challenge_exists = await check_challenge_exists(async_session, challenge_title)
     if not challenge_exists:
         raise HTTPException(status_code=422, detail=f'{challenge_title} challenge not exist!')
 
-    submitter = evaluation_helper.check_submitter(submitter)
+    submitter = evaluation_helper.check_submitter(user["username"])
     description = evaluation_helper.check_description(description)
 
     temp_zip_path = await save_zip_file(submission_file)
