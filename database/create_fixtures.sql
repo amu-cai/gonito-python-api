@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
     email VARCHAR (50) UNIQUE NOT NULL,
     username VARCHAR (50) UNIQUE NOT NULL,
 	hashed_password VARCHAR NOT NULL,
-	is_admin BOOLEAN NOT NULL
+	is_admin BOOLEAN NOT NULL,
+	is_author BOOLEAN NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS challenges (

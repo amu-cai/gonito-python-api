@@ -1,7 +1,7 @@
 from database_sqlite.database_sqlite import Base
 from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey, Float
 
-class Users(Base):
+class User(Base):
     __tablename__ = 'users'
 
     id = Column(Integer, primary_key=True, index=True)
@@ -9,6 +9,7 @@ class Users(Base):
     email = Column(String, unique=True)
     hashed_password = Column(String)
     is_admin = Column(Boolean)
+    is_author = Column(Boolean)
 
 class Metric(Base):
     __tablename__ = 'metrics'

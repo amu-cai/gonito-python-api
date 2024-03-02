@@ -8,6 +8,7 @@ from auth.models import CreateUserRequest, Token
 import auth.auth as auth
 import challenges.challenges as challenges
 import evaluation.evaluation as evaluation
+import admin.admin as admin
 from database_handler.db_connection import get_engine, get_session
 from database_handler.base_table import Base
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -103,22 +104,34 @@ async def submit(db: db_dependency, user: user_dependency, description: Annotate
 async def get_metrics():
     return await evaluation.get_metrics()
 
-@evaluation_router.get("/{challenge}/all-submissions/")
+@evaluation_router.get("/{challenge}/all-submissions")
 async def get_all_submissions(db: db_dependency, challenge: str):
     return await evaluation.get_all_submissions(async_session=db, challenge=challenge)
 
-@evaluation_router.get("/{challenge}/my-submissions/")
+@evaluation_router.get("/{challenge}/my-submissions")
 async def get_my_submissions(db: db_dependency, challenge: str, user: user_dependency):
     await auth.check_user_exists(async_session=db, username=user["username"])
     return await evaluation.get_my_submissions(async_session=db, challenge=challenge, user=user)
 
-@evaluation_router.get("/{challenge}/leaderboard/")
+@evaluation_router.get("/{challenge}/leaderboard")
 async def get_leaderboard(db: db_dependency, challenge: str):
     return await evaluation.get_leaderboard(async_session=db, challenge=challenge)
+
+admin_router = APIRouter(
+    prefix="/admin",
+    tags=['admin']
+)
+
+@admin_router.get("/users-settings")
+async def get_user_settings(db: db_dependency, user: user_dependency):
+    await auth.check_user_exists(async_session=db, username=user['username'])
+    await auth.check_user_is_admin(async_session=db, username=user['username'])
+    return await admin.get_user_settings(async_session=db)
 
 app.include_router(auth_router)
 app.include_router(challenges_router)
 app.include_router(evaluation_router)
+app.include_router(admin_router)
 
 @app.get("/auth", status_code=status.HTTP_200_OK)
 async def user(user: user_dependency):

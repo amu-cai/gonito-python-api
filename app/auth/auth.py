@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 from typing import Annotated
 from fastapi import Depends, HTTPException
 from starlette import status
-from database_sqlite.models import Users
+from database_sqlite.models import User
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -28,7 +28,7 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 async def authenticate_user(username: str, password: str, async_session: async_sessionmaker[AsyncSession]):
     async with async_session as session:
         try:
-            user = (await session.execute(select(Users).filter_by(username=username))).scalars().one()
+            user = (await session.execute(select(User).filter_by(username=username))).scalars().one()
         except:
             user = False
     if not user:
@@ -45,12 +45,21 @@ def create_access_token(username: str, user_id: int, expires_delta: timedelta):
 
 async def check_user_exists(async_session: async_sessionmaker[AsyncSession], username: str):
     async with async_session as session:
-        user_exist = len((await session.execute(select(Users).filter_by(username=username))).scalars().all())
+        user_exist = len((await session.execute(select(User).filter_by(username=username))).scalars().all())
     if user_exist:
         return True
     else:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                         detail='Incorrect login or password.')
+    
+async def check_user_is_admin(async_session: async_sessionmaker[AsyncSession], username: str):
+    async with async_session as session:
+        user = (await session.execute(select(User).filter_by(username=username))).scalars().one()
+    print("user")
+    print(user.is_admin)
+    if not user.is_admin:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail='Access denied, administrator rights needed')
 
 async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
     try:
@@ -67,11 +76,11 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
 
 async def create_user(async_session: async_sessionmaker[AsyncSession], create_user_request: CreateUserRequest):
     async with async_session as session:
-        users = (await session.execute(select(Users))).scalars().all()
+        users = (await session.execute(select(User))).scalars().all()
         users_exist = len(users) > 0
-        username = (await session.execute(select(Users).filter_by(username=create_user_request.username))).scalars().all()
+        username = (await session.execute(select(User).filter_by(username=create_user_request.username))).scalars().all()
         username_already_exist = len(username) > 0
-        email = (await session.execute(select(Users).filter_by(email=create_user_request.email))).scalars().all()
+        email = (await session.execute(select(User).filter_by(email=create_user_request.email))).scalars().all()
         email_already_exist = len(email) > 0
 
     if username_already_exist:
@@ -93,11 +102,12 @@ async def create_user(async_session: async_sessionmaker[AsyncSession], create_us
     if not users_exist:
         is_admin = True
         
-    create_user_model = Users(
+    create_user_model = User(
         email=create_user_request.email,
         username=create_user_request.username,
         hashed_password=bcrypt_context.hash(create_user_request.password),
-        is_admin=is_admin
+        is_admin=is_admin,
+        is_author=False
     )
 
     async with async_session as session:
