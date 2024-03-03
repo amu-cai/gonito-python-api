@@ -1,6 +1,7 @@
 from sklearn import metrics as sk_metrics
+from typing import Any
 
-from .metric_base import MetricBase
+from metric_base import MetricBase
 
 
 class Accuracy(MetricBase):
@@ -17,31 +18,39 @@ class Accuracy(MetricBase):
     """
 
     normalize: bool = True
-    sample_weight: list | None = None
+    sample_weight: list[Any] | None = None
 
     def info(self) -> dict:
         return {
             "name": "accuracy",
             "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html#sklearn.metrics.accuracy_score",
             "parameters": [
-                "normalize: bool (default True)",
-                "sample_weight: list | None (default None)"
+                {
+                    "name": "normalize",
+                    "data_type": "bool",
+                    "default_value": "True"
+                },
+                {
+                    "name": "sample_weight",
+                    "data_type": "list[Any] | None",
+                    "default_value": "None"
+                }
             ]
         }
 
     def calculate(
         self,
-        expected: list[int],
-        out: list[int],
+        expected: list[Any],
+        out: list[Any],
     ) -> float | int:
         """
         Metric calculation.
 
         Parameters
         ----------
-        expected : list[int]
+        expected : list[Any]
             List with expected values.
-        out : list[int]
+        out : list[Any]
             List with actual values.
 
         Returns

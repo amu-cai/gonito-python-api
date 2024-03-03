@@ -1,6 +1,7 @@
 from sklearn import metrics as sk_metrics
+from typing import Any
 
-from .metric_base import MetricBase
+from metric_base import MetricBase
 
 
 class FBeta(MetricBase):
@@ -12,13 +13,13 @@ class FBeta(MetricBase):
     beta : float, default 1.0
         Ratio of recall importance to precision importance. beta > 1 gives more
         weight to recall, while beta < 1 favors precision.
-    labels : list | None, default None
+    labels : list[Any] | None, default None
         The set of labels to include.
     pos_label : int | float | bool | str, default 1
         The class to report if average is binary and the data is binary.
     average : str | None, default 'binary'
         Possible values: ‘micro’, ‘macro’, ‘samples’, ‘weighted’, ‘binary’.
-    sample_weight : list | None, default None
+    sample_weight : list[Any] | None, default None
         Sample weights.
     zero_division : str | float | np.NaN, default 'warn'
         Sets the value to return when there is a zero division, i.e. when all
@@ -26,10 +27,10 @@ class FBeta(MetricBase):
     """
 
     beta: float = 1.0
-    labels: list | None = None
+    labels: list[Any] | None = None
     pos_label: int | float | bool | str = 1
     average: str | None = "binary"
-    sample_weight: list | None = None
+    sample_weight: list[Any] | None = None
     zero_division: str | float = 'warn'
 
     def info(self) -> dict:
@@ -37,29 +38,53 @@ class FBeta(MetricBase):
             "name": "f-beta score",
             "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html#sklearn.metrics.fbeta_score",
             "parameters": [
-                "beta: float (default 1.0)",
-                "labels: list (default None)",
-                "pos_label: int | float | bool | str (default 1)",
-                "average: str | None (default 'binary');\
-                    ‘micro’, ‘macro’, ‘samples’, ‘weighted’, ‘binary’",
-                "sample_weight: list | None (default None)",
-                "zero_division : str | float | np.NaN (default 'warn')"
+                {
+                    "name": "beta",
+                    "data_type": "float",
+                    "default_value": "1.0"
+                },
+                {
+                    "name": "labels",
+                    "data_type": "list[Any] | None",
+                    "default_value": "None"
+                },
+                {
+                    "name": "pos_label",
+                    "data_type": "int | float | bool | str",
+                    "default_value": "1"
+                },
+                {
+                    "name": "average",
+                    "data_type": "str | None",
+                    "default_value": "binary",
+                    "possible_values": "micro, macro, samples, weighted, binary"
+                },
+                {
+                    "name": "sample_weight",
+                    "data_type": "list[Any] | None",
+                    "default_value": "None"
+                },
+                {
+                    "name": "zero_division",
+                    "data_type": "str | float | np.NaN",
+                    "default_value": "warn"
+                }
             ]
         }
 
     def calculate(
         self,
-        expected: list[int],
-        out: list[int],
+        expected: list[Any],
+        out: list[Any],
     ) -> float | list[float]:
         """
         Metric calculation.
 
         Parameters
         ----------
-        expected : list[int]
+        expected : list[Any]
             List with expected values.
-        out : list[int]
+        out : list[Any]
             List with actual values.
 
         Returns

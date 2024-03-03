@@ -1,7 +1,8 @@
+from pydantic import BaseModel
 from abc import ABC, abstractmethod
 
 
-class MetricBase(ABC):
+class MetricBase(BaseModel, ABC):
     """Base class for all metrics."""
 
     @abstractmethod

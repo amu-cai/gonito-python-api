@@ -1,6 +1,7 @@
 from sklearn import metrics as sk_metrics
+from typing import Any
 
-from .metric_base import MetricBase
+from metric_base import MetricBase
 
 
 class RMSE(MetricBase):
@@ -9,24 +10,32 @@ class RMSE(MetricBase):
 
     Parameters
     ----------
-    sample_weight : list[float] | None, default None
+    sample_weight : list[Any] | None, default None
         Sample weights.
-    multioutput : str | list, default 'uniform_average'
+    multioutput : str | list[Any], default 'uniform_average'
         Defines aggregating of multiple output values. Values: ‘raw_values’,
         ‘uniform_average’.
     """
 
-    sample_weight: list | None = None
-    multioutput: str | list = "uniform_average"
+    sample_weight: list[Any] | None = None
+    multioutput: str | list[Any] = "uniform_average"
 
     def info(self) -> dict:
         return {
             "name": "root mean squared error",
             "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error",
             "parameters": [
-                "sample_weight: list | None (default None)",
-                "multioutput str | list (default 'uniform_average');\
-                    ‘raw_values’, ‘uniform_average’"
+                {
+                    "name": "sample_weight",
+                    "data_type": "list[Any] | None",
+                    "default_value": "None"
+                },
+                {
+                    "name": "multioutput",
+                    "data_type": "str | list[Any]",
+                    "default_value": "uniform_average",
+                    "possible_values": "raw_values, uniform_average"
+                }
             ]
         }
 
@@ -42,7 +51,7 @@ class RMSE(MetricBase):
         ----------
         expected : list[float]
             List with expected values.
-        out : list[int]
+        out : list[float]
             List with actual values.
 
         Returns

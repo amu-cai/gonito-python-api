@@ -4,54 +4,54 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class MSE(MetricBase):
+class BalancedAccuracy(MetricBase):
     """
-    Mean squared error class.
+    Balanced accuracy metric class.
 
     Parameters
     ----------
+    adjusted : bool, default False
+        When true, the result is adjusted for chance, so that random
+        performance would score 0, while keeping perfect performance at a score
+        of 1.
     sample_weight : list[Any] | None, default None
         Sample weights.
-    multioutput : str | list[Any], default 'uniform_average'
-        Defines aggregating of multiple output values. Values: ‘raw_values’,
-        ‘uniform_average’.
     """
 
+    adjusted: bool = False
     sample_weight: list[Any] | None = None
-    multioutput: str | list[Any] = "uniform_average"
 
     def info(self) -> dict:
         return {
-            "name": "mean squared error",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_squared_error.html#sklearn.metrics.mean_squared_error",
+            "name": "balanced accuracy",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.balanced_accuracy_score.html#sklearn.metrics.balanced_accuracy_score",
             "parameters": [
+                {
+                    "name": "adjusted",
+                    "data_type": "bool",
+                    "default_value": "False"
+                },
                 {
                     "name": "sample_weight",
                     "data_type": "list[Any] | None",
                     "default_value": "None"
-                },
-                {
-                    "name": "multioutput",
-                    "data_type": "str | list[Any]",
-                    "default_value": "uniform_average",
-                    "possible_values": "raw_values, uniform_average"
                 }
             ]
         }
 
     def calculate(
         self,
-        expected: list[float],
-        out: list[float],
-    ) -> float | list[float]:
+        expected: list[Any],
+        out: list[Any],
+    ) -> float:
         """
-        Metric calculation
+        Metric calculation.
 
         Parameters
         ----------
-        expected : list[float]
+        expected : list[Any]
             List with expected values.
-        out : list[float]
+        out : list[Any]
             List with actual values.
 
         Returns
@@ -59,11 +59,11 @@ class MSE(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.mean_squared_error(
+            return sk_metrics.balanced_accuracy_score(
                 y_true=expected,
                 y_pred=out,
+                adjusted=self.adjusted,
                 sample_weight=self.sample_weight,
-                multioutput=self.multioutput,
             )
         except Exception as e:
             print(f"Could not calculate score because of error: {e}")
