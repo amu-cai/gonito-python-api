@@ -2,7 +2,7 @@ from datetime import timedelta, datetime
 from typing import Annotated
 from fastapi import Depends, HTTPException
 from starlette import status
-from database_sqlite.models import User
+from database.models import User
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError

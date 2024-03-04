@@ -9,24 +9,26 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS challenges (
     id serial PRIMARY KEY,
-    author VARCHAR (500) NOT NULL,
-    source VARCHAR (500) NOT NULL,
+    author VARCHAR (50) REFERENCES users (username),
+    source VARCHAR (5000) NOT NULL,
     title VARCHAR (500) UNIQUE NOT NULL,
-	type VARCHAR (500) NOT NULL,
-	description VARCHAR (500) NOT NULL,
-	main_metric VARCHAR (500) NOT NULL,
+	type VARCHAR (100) NOT NULL,
+	description VARCHAR (5000) NOT NULL,
+	main_metric VARCHAR (100) NOT NULL,
 	best_score FLOAT (50) NOT NULL,
     deadline VARCHAR (500) NOT NULL,
     award VARCHAR (500) NOT NULL,
-    readme VARCHAR NOT NULL
+    readme VARCHAR NOT NULL,
+    deleted BOOLEAN NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS submission (
     id serial PRIMARY KEY,
     challenge VARCHAR (500) REFERENCES challenges (title),
-	submitter VARCHAR (500) NOT NULL,
+	submitter VARCHAR (50) REFERENCES users (username),
 	description VARCHAR (500) NOT NULL,
 	dev_result FLOAT (50) NOT NULL,
 	test_result FLOAT (50) NOT NULL,
-    timestamp VARCHAR (50) NOT NULL
+    timestamp VARCHAR (50) NOT NULL,
+    deleted BOOLEAN NOT NULL
 );

@@ -1,12 +1,23 @@
 from sqlalchemy import (
     select,
 )
-from database_sqlite.models import User
+from database.models import User
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
 )
 from admin.models import UserRightsModel
+from database.models import Challenge
+from secrets import token_hex
+import shutil
+import json
+
+SAVE_SEPARATOR = '_~~~_'
+f = open('configure.json')
+data = json.load(f)
+STORE = data['store_path']
+challenges_dir = f"{STORE}/challenges"
+deleted_challenges_dir = f"{STORE}/deleted_challenges"
 
 async def get_users_settings(async_session):
     async with async_session as session:
@@ -31,3 +42,13 @@ async def user_rights_update(async_session: async_sessionmaker[AsyncSession], us
         user.is_author = is_author
         await session.commit()
     return {"success": True, "user": user_to_update, "message": "User rights uploaded successfully"}
+
+async def delete_challenge(async_session: async_sessionmaker[AsyncSession], challenge_title: str):
+    async with async_session as session:
+        challenge = (await session.execute(select(Challenge).filter_by(title=challenge_title))).scalars().one()
+        new_challenge_title = f"{challenge.title}{SAVE_SEPARATOR}{token_hex(5)}{SAVE_SEPARATOR}DELETED"
+        shutil.move(f"{challenges_dir}/{challenge_title}", f"{deleted_challenges_dir}/{new_challenge_title}")
+        challenge.title = new_challenge_title
+        challenge.deleted = True
+        await session.commit()
+    return {"success": True, "challenge": challenge_title, "message": "Challenge deleted"}

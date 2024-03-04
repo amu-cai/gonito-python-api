@@ -3,7 +3,7 @@ import os
 import json
 from global_helper import check_challenge_in_store, check_zip_structure
 from fastapi import HTTPException
-from database_sqlite.models import Challenge
+from database.models import Challenge
 from shutil import rmtree
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,

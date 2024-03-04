@@ -10,9 +10,10 @@ import auth.auth as auth
 import challenges.challenges as challenges
 import evaluation.evaluation as evaluation
 import admin.admin as admin
-from database_handler.db_connection import get_engine, get_session
-from database_handler.base_table import Base
+from database.db_connection import get_engine, get_session
+from database.base_table import Base
 from sqlalchemy.ext.asyncio import AsyncSession
+from global_helper import check_challenge_exists
 
 app = FastAPI()
 
@@ -93,7 +94,7 @@ async def get_challenges(db: db_dependency):
     return await challenges.all_challenges(async_session=db)
 
 @challenges_router.get("/challenge/{challenge}")
-async def get_challenge_readme(db: db_dependency, challenge: str):
+async def get_challenge_info(db: db_dependency, challenge: str):
     return await challenges.get_challenge_info(async_session=db, challenge=challenge)
 
 evaluation_router = APIRouter(
@@ -140,6 +141,13 @@ async def user_rights_update(db: db_dependency, user: user_dependency, user_righ
     await auth.check_user_exists(async_session=db, username=user_rights.username)
     await auth.check_user_is_admin(async_session=db, username=user['username'])
     return await admin.user_rights_update(async_session=db, user_rights=user_rights)
+
+@admin_router.post("/delete-challenge/{challenge_title}")
+async def delete_challenge(db: db_dependency, user: user_dependency, challenge_title: str):
+    await auth.check_user_exists(async_session=db, username=user['username'])
+    await auth.check_user_is_admin(async_session=db, username=user['username'])
+    await check_challenge_exists(async_session=db, title=challenge_title)
+    return await admin.delete_challenge(async_session=db, challenge_title=challenge_title)
 
 app.include_router(auth_router)
 app.include_router(challenges_router)

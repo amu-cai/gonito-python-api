@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import (
     select,
 )
-from database_sqlite.models import Challenge
+from database.models import Challenge
 from secrets import token_hex
 
 f = open('configure.json')

@@ -1,4 +1,4 @@
-from database_sqlite.models import Submission
+from database.models import Submission
 import evaluation.evaluation_helper as evaluation_helper
 from datetime import datetime
 from fastapi import UploadFile, File, Form, HTTPException

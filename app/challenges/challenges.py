@@ -1,5 +1,5 @@
 from fastapi import UploadFile, File, HTTPException
-from database_sqlite.models import Challenge
+from database.models import Challenge
 import challenges.challenges_helper as challenges_helper
 from challenges.models import ChallengeInputModel
 import json
@@ -43,7 +43,8 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession], user
         best_score = best_score,
         deadline = challenge_input_model.deadline,
         award = challenge_input_model.award,
-        readme = readme_content
+        readme = readme_content,
+        deleted = False
     )
 
     async with async_session as session:
@@ -69,6 +70,7 @@ async def all_challenges(
             "bestScore": challenge.best_score,
             "deadline": challenge.deadline,
             "award": challenge.award,
+            "deleted": challenge.deleted
         })
     return result
 
@@ -89,5 +91,6 @@ async def get_challenge_info(async_session, challenge: str):
         "source": challenge_info.source,
         "bestScore": challenge_info.best_score,
         "deadline": challenge_info.deadline,
-        "award": challenge_info.award
+        "award": challenge_info.award,
+        "deleted": challenge_info.deleted
     }
