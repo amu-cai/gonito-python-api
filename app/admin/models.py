@@ -8,3 +8,8 @@ class UserSettingsModel(BaseModel):
     deadline: str | None = None
     award: str | None = None
     challenge_source: str
+
+class UserRightsModel(BaseModel):
+    username: str
+    is_admin: bool
+    is_author: bool

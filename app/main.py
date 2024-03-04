@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import UploadFile, File
 from challenges.models import ChallengeInputModel
+from admin.models import UserRightsModel
 from auth.models import CreateUserRequest, Token
 import auth.auth as auth
 import challenges.challenges as challenges
@@ -132,6 +133,13 @@ async def get_user_settings(db: db_dependency, user: user_dependency):
     await auth.check_user_exists(async_session=db, username=user['username'])
     await auth.check_user_is_admin(async_session=db, username=user['username'])
     return await admin.get_users_settings(async_session=db)
+
+@admin_router.post("/user-rights-update")
+async def user_rights_update(db: db_dependency, user: user_dependency, user_rights: UserRightsModel):
+    await auth.check_user_exists(async_session=db, username=user['username'])
+    await auth.check_user_exists(async_session=db, username=user_rights.username)
+    await auth.check_user_is_admin(async_session=db, username=user['username'])
+    return await admin.user_rights_update(async_session=db, user_rights=user_rights)
 
 app.include_router(auth_router)
 app.include_router(challenges_router)

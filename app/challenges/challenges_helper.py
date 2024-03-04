@@ -25,7 +25,7 @@ async def delete_challenge_by_title(async_session, challenge_title):
         challenge_id = [challenge.id for challenge in session.query(Challenge).where(Challenge.title == challenge_title)][0]
         challenge = session.get(Challenge, challenge_id)
         session.delete(challenge)
-        session.commit()
+        await session.commit()
 
 def check_file_extension(async_session: async_sessionmaker[AsyncSession], file, challenge_title):
     file_ext = file.filename.split(".").pop()
