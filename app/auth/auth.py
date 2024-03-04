@@ -55,8 +55,6 @@ async def check_user_exists(async_session: async_sessionmaker[AsyncSession], use
 async def check_user_is_admin(async_session: async_sessionmaker[AsyncSession], username: str):
     async with async_session as session:
         user = (await session.execute(select(User).filter_by(username=username))).scalars().one()
-    print("user")
-    print(user.is_admin)
     if not user.is_admin:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                         detail='Access denied, administrator rights needed')
@@ -124,3 +122,11 @@ async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm,
     token = create_access_token(user.username, user.id, timedelta(minutes=20))
 
     return {'access_token': token, 'token_type': 'bearer'}
+
+async def get_user_rights_info(async_session: async_sessionmaker[AsyncSession], username: str):
+    async with async_session as session:
+        user = (await session.execute(select(User).filter_by(username=username))).scalars().one()
+    return {
+        'isAdmin': user.is_admin,
+        'isAuthor': user.is_author
+    }

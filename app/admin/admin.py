@@ -3,7 +3,7 @@ from sqlalchemy import (
 )
 from database_sqlite.models import User
 
-async def get_user_settings(async_session):
+async def get_users_settings(async_session):
     async with async_session as session:
         users = (await session.execute(select(User))).scalars().all()
     result = []

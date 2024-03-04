@@ -47,13 +47,18 @@ auth_router = APIRouter(
     tags=['auth']
 )
 
-@auth_router.post("/create_user", status_code=status.HTTP_201_CREATED)
+@auth_router.post("/create-user", status_code=status.HTTP_201_CREATED)
 async def create_user(db: db_dependency, create_user_request: CreateUserRequest):
     return await auth.create_user(async_session=db, create_user_request=create_user_request)
 
 @auth_router.post("/login", response_model=Token)
 async def login_for_access_token(db: db_dependency, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return await auth.login_for_access_token(async_session=db, form_data=form_data)
+
+@auth_router.get("/user-rights-info")
+async def get_user_rights_info(db: db_dependency, user: user_dependency):
+    await auth.check_user_exists(async_session=db, username=user["username"])
+    return await auth.get_user_rights_info(async_session=db, username=user["username"])
 
 challenges_router = APIRouter(
     prefix="/challenges",
@@ -126,7 +131,7 @@ admin_router = APIRouter(
 async def get_user_settings(db: db_dependency, user: user_dependency):
     await auth.check_user_exists(async_session=db, username=user['username'])
     await auth.check_user_is_admin(async_session=db, username=user['username'])
-    return await admin.get_user_settings(async_session=db)
+    return await admin.get_users_settings(async_session=db)
 
 app.include_router(auth_router)
 app.include_router(challenges_router)
