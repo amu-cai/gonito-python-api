@@ -18,7 +18,10 @@ STORE = data['store_path']
 
 challenges_dir = f"{STORE}/challenges"
 
-async def create_challenge(async_session: async_sessionmaker[AsyncSession], user, challenge_input_model: ChallengeInputModel, challenge_file:UploadFile = File(...)):
+async def create_challenge(async_session: async_sessionmaker[AsyncSession], 
+                           username: str, 
+                           challenge_input_model: ChallengeInputModel, 
+                           challenge_file:UploadFile = File(...)):
     challenge_title = challenge_input_model.title
     challenges_helper.check_challenge_title(challenge_title)
     challenge_exists = await check_challenge_exists(async_session, challenge_title)
@@ -34,12 +37,13 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession], user
     readme_content = readme.read()
 
     create_challenge_model = Challenge(
-        author = user["username"],
+        author = username,
         title = challenge_title,
         type = challenge_input_model.type,
         source = challenge_input_model.challenge_source,
         description = challenge_input_model.description,
         main_metric = challenge_input_model.main_metric,
+        main_metric_parameters = challenge_input_model.main_metric_parameters,
         best_score = best_score,
         deadline = challenge_input_model.deadline,
         award = challenge_input_model.award,
@@ -87,6 +91,7 @@ async def get_challenge_info(async_session, challenge: str):
         "author": challenge_info.author,
         "type": challenge_info.type,
         "mainMetric": challenge_info.main_metric,
+        "mainMetricParameters": challenge_info.main_metric_parameters,
         "description": challenge_info.description,
         "readme": challenge_info.readme,
         "source": challenge_info.source,

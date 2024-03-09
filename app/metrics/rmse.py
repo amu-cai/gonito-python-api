@@ -1,7 +1,6 @@
 from sklearn import metrics as sk_metrics
 from typing import Any
-
-from metric_base import MetricBase
+from metrics.metric_base import MetricBase
 
 
 class RMSE(MetricBase):

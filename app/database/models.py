@@ -21,6 +21,7 @@ class Challenge(Base):
     type = Column(String)
     description = Column(String)
     main_metric = Column(String)
+    main_metric_parameters = Column(String)
     best_score = Column(Float)
     deadline = Column(String)
     award = Column(String)

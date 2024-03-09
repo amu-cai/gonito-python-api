@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS challenges (
 	type VARCHAR (100) NOT NULL,
 	description VARCHAR (5000) NOT NULL,
 	main_metric VARCHAR (100) NOT NULL,
+    main_metric_parameters VARCHAR (5000),
 	best_score FLOAT (50) NOT NULL,
     deadline VARCHAR (500) NOT NULL,
     award VARCHAR (500) NOT NULL,
@@ -30,5 +31,5 @@ CREATE TABLE IF NOT EXISTS submission (
 	dev_result FLOAT (50) NOT NULL,
 	test_result FLOAT (50) NOT NULL,
     timestamp VARCHAR (50) NOT NULL,
-    deleted BOOLEAN NOT NULL
+    deleted BOOLEAN
 );

@@ -1,15 +1,15 @@
 from pydantic import BaseModel
 
-from metric_base import MetricBase
-from accuracy import Accuracy
-from mse import MSE
-from rmse import RMSE
-from fbeta import FBeta
-from recall import Recall
-from precision import Precision
-from average_precision import AveragePrecision
-from balanced_accuracy import BalancedAccuracy
-from brier import Brier
+from metrics.metric_base import MetricBase
+from metrics.accuracy import Accuracy
+from metrics.mse import MSE
+from metrics.rmse import RMSE
+from metrics.fbeta import FBeta
+from metrics.recall import Recall
+from metrics.precision import Precision
+from metrics.average_precision import AveragePrecision
+from metrics.balanced_accuracy import BalancedAccuracy
+from metrics.brier import Brier
 
 
 class Metrics(BaseModel):

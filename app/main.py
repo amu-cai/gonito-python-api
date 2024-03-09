@@ -76,6 +76,7 @@ async def create_challenge(db: db_dependency,  user: user_dependency,
                             award: Annotated[str, Form()] = "", 
                             type: Annotated[str, Form()] = "",
                             metric: Annotated[str, Form()] = "",
+                            parameters: Annotated[str, Form()] = "",
                             challenge_file:UploadFile = File(...)):
     await auth.check_user_exists(async_session=db, username=user["username"])
     challenge_input_model: ChallengeInputModel = ChallengeInputModel(
@@ -84,10 +85,11 @@ async def create_challenge(db: db_dependency,  user: user_dependency,
         description = description,
         type = type,
         main_metric = metric,
+        main_metric_parameters = parameters,
         deadline = deadline,
         award = award,
     )
-    return await challenges.create_challenge(async_session=db, user=user, challenge_file=challenge_file, challenge_input_model=challenge_input_model)
+    return await challenges.create_challenge(async_session=db, username=user["username"], challenge_file=challenge_file, challenge_input_model=challenge_input_model)
 
 @challenges_router.get("/get-challenges")
 async def get_challenges(db: db_dependency):
@@ -103,9 +105,18 @@ evaluation_router = APIRouter(
 )
 
 @evaluation_router.post("/submit")
-async def submit(db: db_dependency, user: user_dependency, description: Annotated[str, Form()], challenge_title: Annotated[str, Form()], submission_file: UploadFile = File(...)):
+async def submit(db: db_dependency, user: user_dependency, 
+                 description: Annotated[str, Form()], 
+                 challenge_title: Annotated[str, Form()], 
+                 submission_file: UploadFile = File(...)):
     await auth.check_user_exists(async_session=db, username=user["username"])
-    return await evaluation.submit(async_session=db, user=user, submission_file=submission_file, challenge_title=challenge_title, description=description)
+    challenge_exists = await check_challenge_exists(async_session=db, title=challenge_title)
+    if not challenge_exists:
+        raise HTTPException(status_code=422, detail=f'{challenge_title} challenge not exist!')
+    return await evaluation.submit(async_session=db, username=user["username"], 
+                                   submission_file=submission_file, 
+                                   challenge_title=challenge_title, 
+                                   description=description)
 
 @evaluation_router.get("/get-metrics")
 async def get_metrics():
