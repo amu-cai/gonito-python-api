@@ -140,6 +140,8 @@ async def user_rights_update(db: db_dependency, user: user_dependency, user_righ
     await auth.check_user_exists(async_session=db, username=user['username'])
     await auth.check_user_exists(async_session=db, username=user_rights.username)
     await auth.check_user_is_admin(async_session=db, username=user['username'])
+    if not user_rights.is_admin and user_rights.username == user['username']:
+        raise HTTPException(status_code=401, detail='Remove admin failed! Can not remove admin from self.')
     return await admin.user_rights_update(async_session=db, user_rights=user_rights)
 
 @admin_router.post("/delete-challenge/{challenge_title}")
