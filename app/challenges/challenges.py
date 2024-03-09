@@ -84,6 +84,7 @@ async def get_challenge_info(async_session, challenge: str):
     return {
         "id": challenge_info.id, 
         "title": challenge_info.title,
+        "author": challenge_info.author,
         "type": challenge_info.type,
         "mainMetric": challenge_info.main_metric,
         "description": challenge_info.description,
