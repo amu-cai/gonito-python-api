@@ -4,42 +4,30 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class Recall(MetricBase):
+class AveragePrecision(MetricBase):
     """
-    Recall metric class.
+    Average precision metric.
 
     Parameters
     ----------
-    labels : list[Any], default None
-        The set of labels.
     pos_label : int | float | bool | str, default 1
         The class to report if average='binary' and the data is binary.
-    average : str | None, default 'bianry'
+    average : str | None, default 'macro'
         This parameter is required for multiclass/multilabel targets. Values:
-        ‘micro’, ‘macro’, ‘samples’, ‘weighted’, ‘binary’ or None.
+        ‘micro’, ‘macro’, ‘samples’, ‘weighted’ or None.
     sample_weight : list[Any] | None, default None
         Sample weights.
-    zero_division : str | float | np.NaN, default 'warn'
-        Sets the value to return when there is a zero division, i.e. when all
-        predictions and labels are negative. Values: “warn”, 0.0, 1.0, np.nan.
     """
 
-    labels: list[Any] | None = None
     pos_label: int | float | bool | str = 1
-    average: str | None = 'bianry'
+    average: str | None = "macro"
     sample_weight: list[Any] | None = None
-    zero_division: str | float = 'warn'
 
     def info(self) -> dict:
         return {
-            "name": "recall",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html#sklearn.metrics.recall_score",
+            "name": "average precision",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html#sklearn.metrics.average_precision_score",
             "parameters": [
-                {
-                    "name": "labels",
-                    "data_type": "list[Any] | None",
-                    "default_value": "None"
-                },
                 {
                     "name": "pos_label",
                     "data_type": "int | float | bool | str",
@@ -48,18 +36,13 @@ class Recall(MetricBase):
                 {
                     "name": "average",
                     "data_type": "str | None",
-                    "default_value": "binary",
-                    "possible_values": "micro, macro, samples, weighted, binary"
+                    "default_value": "macro",
+                    "possible_values": "micro, macro, samples, weighted"
                 },
                 {
                     "name": "sample_weight",
                     "data_type": "list[Any] | None",
                     "default_value": "None"
-                },
-                {
-                    "name": "zero_division",
-                    "data_type": "str | float | np.NaN",
-                    "default_value": "warn"
                 }
             ]
         }
@@ -67,10 +50,10 @@ class Recall(MetricBase):
     def calculate(
         self,
         expected: list[Any],
-        out: list[Any],
-    ) -> float | list[float]:
+        out: list[Any]
+    ) -> float:
         """
-        Metric calculation.
+        Metric calculation
 
         Parameters
         ----------
@@ -84,14 +67,12 @@ class Recall(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.recall_score(
+            return sk_metrics.average_precision_score(
                 y_true=expected,
                 y_pred=out,
-                labels=self.labels,
                 pos_label=self.pos_label,
                 average=self.average,
                 sample_weight=self.sample_weight,
-                zero_division=self.zero_division,
             )
         except Exception as e:
             print(f"Could not calculate score because of error: {e}")

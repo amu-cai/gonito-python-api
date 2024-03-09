@@ -1,39 +1,26 @@
 from pydantic import BaseModel
 
+from metric_base import MetricBase
+from accuracy import Accuracy
+from mse import MSE
+from rmse import RMSE
+from fbeta import FBeta
+from recall import Recall
+from precision import Precision
+from average_precision import AveragePrecision
+from balanced_accuracy import BalancedAccuracy
+from brier import Brier
+
 
 class Metrics(BaseModel):
     """All awailable metrics."""
-    accuracy = "accuracy"
-    fbeta_score = "fbeta_score"
-    rmse = "rmse"
-    mse = "mse"
-    recall = "recall"
-    precision = "precision"
 
-
-"""
-Pearson | Spearman | BLEU | GLEU | WER | CER
-              | ClippEU
-              | FMeasure Double | MacroFMeasure Double | NMI
-              | LogLossHashed Word32 | CharMatch | MAP | NDCG Int | LogLoss
-              | Likelihood
-              | BIOF1 | BIOWeightedF1 | BIOF1Labels | TokenAccuracy
-              | SegmentAccuracy | LikelihoodHashed Word32
-              | PerplexityHashed Word32
-              | MAE | SMAPE
-              | MultiLabelFMeasure Double MatchingSpecification
-              | MultiLabelLogLoss | MultiLabelLikelihood
-              | SoftFMeasure Double
-              | ProbabilisticMultiLabelFMeasure Double
-              | ProbabilisticSoftFMeasure Double
-              | ProbabilisticSoft2DFMeasure Double
-              | Soft2DFMeasure Double
-              | FLCFMeasure Double
-              | Haversine
-              | Improvement Double
-              | Mean Metric
-              | MacroAvg Metric
-              | MAEAgainstInterval | MSEAgainstInterval | RMSEAgainstInterval
-              | WAR | CAR
-
-"""
+    accuracy: MetricBase = Accuracy
+    balanced_accuracy: MetricBase = BalancedAccuracy
+    fbeta_score: MetricBase = FBeta
+    rmse: MetricBase = RMSE
+    mse: MetricBase = MSE
+    recall: MetricBase = Recall
+    precision: MetricBase = Precision
+    average_precision: MetricBase = AveragePrecision
+    brier: MetricBase = Brier

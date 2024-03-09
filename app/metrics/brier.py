@@ -4,31 +4,30 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class Accuracy(MetricBase):
+class Brier(MetricBase):
     """
-    Accuracy metric class.
+    Brier metric class.
 
     Parameters
     ----------
-    normalize : bool, default True
-        Return the fraction of correctly classified samples, otherwise their
-        number.
+    pos_label : int | float | bool | str | None, default None
+        Label of the positive class.
     sample_weight : list[Any] | None, default None
         Sample weights.
     """
 
-    normalize: bool = True
+    pos_label: int | float | bool | str | None = None
     sample_weight: list[Any] | None = None
 
     def info(self) -> dict:
         return {
-            "name": "accuracy",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.accuracy_score.html#sklearn.metrics.accuracy_score",
+            "name": "brier",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.brier_score_loss.html#sklearn.metrics.brier_score_loss",
             "parameters": [
                 {
-                    "name": "normalize",
-                    "data_type": "bool",
-                    "default_value": "True"
+                    "name": "pos_label",
+                    "data_type": "int | float | bool | str | None",
+                    "default_value": "None"
                 },
                 {
                     "name": "sample_weight",
@@ -42,7 +41,7 @@ class Accuracy(MetricBase):
         self,
         expected: list[Any],
         out: list[Any],
-    ) -> float | int:
+    ) -> float:
         """
         Metric calculation.
 
@@ -58,10 +57,10 @@ class Accuracy(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.accuracy_score(
+            return sk_metrics.brier_score_loss(
                 y_true=expected,
-                y_pred=out,
-                normalize=self.normalize,
+                y_prob=out,
+                pos_label=self.pos_label,
                 sample_weight=self.sample_weight,
             )
         except Exception as e:

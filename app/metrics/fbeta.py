@@ -4,19 +4,21 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class Recall(MetricBase):
+class FBeta(MetricBase):
     """
-    Recall metric class.
+    F-beta score class.
 
     Parameters
     ----------
-    labels : list[Any], default None
-        The set of labels.
+    beta : float, default 1.0
+        Ratio of recall importance to precision importance. beta > 1 gives more
+        weight to recall, while beta < 1 favors precision.
+    labels : list[Any] | None, default None
+        The set of labels to include.
     pos_label : int | float | bool | str, default 1
-        The class to report if average='binary' and the data is binary.
-    average : str | None, default 'bianry'
-        This parameter is required for multiclass/multilabel targets. Values:
-        ‘micro’, ‘macro’, ‘samples’, ‘weighted’, ‘binary’ or None.
+        The class to report if average is binary and the data is binary.
+    average : str | None, default 'binary'
+        Possible values: ‘micro’, ‘macro’, ‘samples’, ‘weighted’, ‘binary’.
     sample_weight : list[Any] | None, default None
         Sample weights.
     zero_division : str | float | np.NaN, default 'warn'
@@ -24,17 +26,23 @@ class Recall(MetricBase):
         predictions and labels are negative. Values: “warn”, 0.0, 1.0, np.nan.
     """
 
+    beta: float = 1.0
     labels: list[Any] | None = None
     pos_label: int | float | bool | str = 1
-    average: str | None = 'bianry'
+    average: str | None = "binary"
     sample_weight: list[Any] | None = None
     zero_division: str | float = 'warn'
 
     def info(self) -> dict:
         return {
-            "name": "recall",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.recall_score.html#sklearn.metrics.recall_score",
+            "name": "f-beta score",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.fbeta_score.html#sklearn.metrics.fbeta_score",
             "parameters": [
+                {
+                    "name": "beta",
+                    "data_type": "float",
+                    "default_value": "1.0"
+                },
                 {
                     "name": "labels",
                     "data_type": "list[Any] | None",
@@ -84,9 +92,10 @@ class Recall(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.recall_score(
+            return sk_metrics.fbeta_score(
                 y_true=expected,
                 y_pred=out,
+                beta=self.beta,
                 labels=self.labels,
                 pos_label=self.pos_label,
                 average=self.average,
