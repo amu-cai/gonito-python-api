@@ -12,6 +12,7 @@ from average_precision import AveragePrecision
 from balanced_accuracy import BalancedAccuracy
 from brier import Brier
 from cohen_kappa import CohenKappa
+from dcg import DCG
 
 
 class Metrics(BaseModel):
@@ -27,6 +28,7 @@ class Metrics(BaseModel):
     average_precision: MetricBase = AveragePrecision
     brier: MetricBase = Brier
     cohen_kappa: MetricBase = CohenKappa
+    dcg: MetricBase = DCG
 
 
 def all_metrics() -> list[str]:
