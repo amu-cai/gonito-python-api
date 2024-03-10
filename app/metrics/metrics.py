@@ -14,7 +14,8 @@ from brier import Brier
 from cohen_kappa import CohenKappa
 from dcg import DCG
 from hamming_loss import HammingLoss
-from hinge_loss import HingeLoss 
+from hinge_loss import HingeLoss
+from log_loss import LogLoss
 
 
 class Metrics(BaseModel):
@@ -33,6 +34,7 @@ class Metrics(BaseModel):
     dcg: MetricBase = DCG
     hamming_loss: MetricBase = HammingLoss
     hinge_loss: MetricBase = HingeLoss
+    log_loss: MetricBase = LogLoss
 
 
 def all_metrics() -> list[str]:
