@@ -11,10 +11,11 @@ from precision import Precision
 from average_precision import AveragePrecision
 from balanced_accuracy import BalancedAccuracy
 from brier import Brier
+from cohen_kappa import CohenKappa
 
 
 class Metrics(BaseModel):
-    """All awailable metrics."""
+    """All available metrics."""
 
     accuracy: MetricBase = Accuracy
     balanced_accuracy: MetricBase = BalancedAccuracy
@@ -25,6 +26,7 @@ class Metrics(BaseModel):
     precision: MetricBase = Precision
     average_precision: MetricBase = AveragePrecision
     brier: MetricBase = Brier
+    cohen_kappa: MetricBase = CohenKappa
 
 
 def all_metrics() -> list[str]:
