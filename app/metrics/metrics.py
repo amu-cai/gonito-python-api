@@ -58,18 +58,16 @@ def calculate_metric(
     metric_name: str,
     expected: list[Any],
     out: list[Any],
+    params: dict,
 ) -> Any:
     """Use given metric with non-default settings."""
     if metric_name not in all_metrics():
         print(f"Metric {metric_name} is not defined")
     else:
         metric = getattr(Metrics(), metric_name)
-        return metric().calculate(expected, out)
+        metric_params = metric.model_fields.keys()
 
-
-print(f"accuracy fields: {Metrics().accuracy.model_fields}")
-print(f"accuracy info: {metric_info('accuracy')}")
-print(f"abc info: {metric_info('abc')}")
-print(f"accuracy calculate: {calculate_default_metric('accuracy', [1,2,3], [1,2,3])}")
-print(f"abc calculate: {calculate_default_metric('abc', [1,2,3], [1,2,3])}")
-# print(f"test: {test().info()}")
+        if params == metric_params:
+            return metric(**params).calculate(expected, out)
+        else:
+            print(f"Metric {metric_name} has the following params: {metric_params} and you gave those: {params}")
