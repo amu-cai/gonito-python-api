@@ -13,6 +13,7 @@ from balanced_accuracy import BalancedAccuracy
 from brier import Brier
 from cohen_kappa import CohenKappa
 from dcg import DCG
+from hamming_loss import HammingLoss
 
 
 class Metrics(BaseModel):
@@ -29,6 +30,7 @@ class Metrics(BaseModel):
     brier: MetricBase = Brier
     cohen_kappa: MetricBase = CohenKappa
     dcg: MetricBase = DCG
+    hamming_loss: MetricBase = HammingLoss
 
 
 def all_metrics() -> list[str]:

@@ -4,40 +4,23 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class CohenKappa(MetricBase):
+class HammingLoss(MetricBase):
     """
-    Kohen cappa metric class.
+    Hamming loss metric class.
 
     Parameters
     ----------
-    labels : list[Any] | None, default None
-        List of labels to index the matrix.
-    weights : str | None, default None
-        Weighting type to calculate the score. Values: 'linear', 'quadratic'.
     sample_weight : list[Any] | None, default None
         Sample weights.
     """
 
-    labels: list[Any] | None = None
-    weights: str | None = None
     sample_weight: list[Any] | None = None
 
     def info(self) -> dict:
         return {
-            "name": "Cohen kappa",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.cohen_kappa_score.html#sklearn.metrics.cohen_kappa_score",
+            "name": "Hamming loss",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.hamming_loss.html#sklearn.metrics.hamming_loss",
             "parameters": [
-                {
-                    "name": "labels",
-                    "data_type": "list[Any] | None",
-                    "default_value": "None"
-                },
-                {
-                    "name": "weights",
-                    "data_type": "str | None",
-                    "default_value": "None",
-                    "values": "linear, quadratic"
-                },
                 {
                     "name": "sample_weight",
                     "data_type": "list[Any] | None",
@@ -69,8 +52,6 @@ class CohenKappa(MetricBase):
             return sk_metrics.accuracy_score(
                 y_true=expected,
                 y_pred=out,
-                labels=self.labels,
-                weights=self.weights,
                 sample_weight=self.sample_weight,
             )
         except Exception as e:
