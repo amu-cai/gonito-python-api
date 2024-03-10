@@ -4,9 +4,9 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class HammingLoss(MetricBase):
+class MatthewsCorrelation(MetricBase):
     """
-    Hamming loss metric class.
+    Matthews correlation metric class.
 
     Parameters
     ----------
@@ -18,8 +18,8 @@ class HammingLoss(MetricBase):
 
     def info(self) -> dict:
         return {
-            "name": "Hamming loss",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.hamming_loss.html#sklearn.metrics.hamming_loss",
+            "name": "Matthews correlation",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html#sklearn.metrics.matthews_corrcoef",
             "parameters": [
                 {
                     "name": "sample_weight",
@@ -49,7 +49,7 @@ class HammingLoss(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.hamming_loss(
+            return sk_metrics.matthews_corrcoef(
                 y_true=expected,
                 y_pred=out,
                 sample_weight=self.sample_weight,

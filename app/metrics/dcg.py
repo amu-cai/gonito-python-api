@@ -74,7 +74,7 @@ class DCG(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.accuracy_score(
+            return sk_metrics.dcg_score(
                 y_true=expected,
                 y_pred=out,
                 k=self.k,

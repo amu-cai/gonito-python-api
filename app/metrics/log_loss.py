@@ -75,7 +75,7 @@ class LogLoss(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.accuracy_score(
+            return sk_metrics.log_loss(
                 y_true=expected,
                 y_pred=out,
                 eps=self.eps,

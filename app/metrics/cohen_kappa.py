@@ -66,7 +66,7 @@ class CohenKappa(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.accuracy_score(
+            return sk_metrics.cohen_kappa_score(
                 y_true=expected,
                 y_pred=out,
                 labels=self.labels,

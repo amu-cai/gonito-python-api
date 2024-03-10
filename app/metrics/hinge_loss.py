@@ -57,7 +57,7 @@ class HingeLoss(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.accuracy_score(
+            return sk_metrics.hinge_loss(
                 y_true=expected,
                 pred_decision=out,
                 labels=self.labels,
