@@ -17,6 +17,7 @@ from hamming_loss import HammingLoss
 from hinge_loss import HingeLoss
 from log_loss import LogLoss
 from matthews_correlation import MatthewsCorrelation
+from ndcg import NDCG
 
 
 class Metrics(BaseModel):
@@ -37,6 +38,7 @@ class Metrics(BaseModel):
     hinge_loss: MetricBase = HingeLoss
     log_loss: MetricBase = LogLoss
     matthews_correlation: MetricBase = MatthewsCorrelation
+    ndcg: MetricBase = NDCG
 
 
 def all_metrics() -> list[str]:
