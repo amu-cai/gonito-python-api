@@ -3,11 +3,11 @@ services:
   db:
     build: ./database/
     environment:
-      POSTGRES_PASSWORD: secret-test
-      POSTGRES_USER: user-test
-      POSTGRES_DB: gonito-test
-      DB_USER: user-test
-      DB_PASS: secret-test
+      - POSTGRES_PASSWORD=${DB_PASS}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_DB=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASS=${DB_PASS}
     ports:
       - 5432:5432
     volumes:
