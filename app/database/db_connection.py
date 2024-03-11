@@ -5,11 +5,38 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
 )
 
-DB_NAME = "gonito-test"
-DB_USER = "user-test"
-DB_PASS = "secret-test"
-DB_HOST = "db"
-DB_PORT = "5432"
+import os
+
+DB_NAME_ENV = os.getenv("DB_NAME")
+if DB_NAME_ENV is not None:
+    DB_NAME = DB_NAME_ENV
+else:
+    raise FileNotFoundError("DB_NAME env variable not defined")
+
+DB_USER_ENV = os.getenv("DB_USER")
+if DB_USER_ENV is not None:
+    DB_USER = DB_USER_ENV
+else:
+    raise FileNotFoundError("DB_USER env variable not defined")
+
+DB_PASS_ENV = os.getenv("DB_PASS")
+if DB_PASS_ENV is not None:
+    DB_PASS = DB_PASS_ENV
+else:
+    raise FileNotFoundError("DB_PASS env variable not defined")
+
+DB_HOST_ENV = os.getenv("DB_HOST")
+if DB_HOST_ENV is not None:
+    DB_HOST = DB_HOST_ENV
+else:
+    raise FileNotFoundError("DB_HOST env variable not defined")
+
+DB_PORT_ENV = os.getenv("DB_PORT")
+if DB_PORT_ENV is not None:
+    DB_PORT = DB_PORT_ENV
+else:
+    raise FileNotFoundError("DB_PORT env variable not defined")
+
 DB_CONNECTION_URL = "postgresql+asyncpg://{}:{}@{}:{}/{}".format(
     DB_USER, DB_PASS, DB_HOST, DB_PORT, DB_NAME
 )
