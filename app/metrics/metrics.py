@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Any
+from fastapi import HTTPException
 
 from metrics.metric_base import MetricBase
 from metrics.accuracy import Accuracy
@@ -48,7 +49,7 @@ def all_metrics() -> list[str]:
 def metric_info(metric_name: str) -> dict:
     """Get information about a metric."""
     if metric_name not in all_metrics():
-        print(f"Metric {metric_name} is not defined")
+        raise HTTPException(status_code=422, detail=f"Metric {metric_name} is not defined")
     else:
         metric = getattr(Metrics(), metric_name)
         return metric().info()
@@ -61,7 +62,7 @@ def calculate_default_metric(
 ) -> Any:
     """Use given metric with default settings."""
     if metric_name not in all_metrics():
-        print(f"Metric {metric_name} is not defined")
+        raise HTTPException(status_code=422, detail=f"Metric {metric_name} is not defined")
     else:
         metric = getattr(Metrics(), metric_name)
         return metric().calculate(expected, out)
@@ -75,12 +76,23 @@ def calculate_metric(
 ) -> Any:
     """Use given metric with non-default settings."""
     if metric_name not in all_metrics():
-        print(f"Metric {metric_name} is not defined")
+        print("raise")
+        print(metric_name)
+        print(all_metrics())
+        raise HTTPException(status_code=422, detail=f"Metric {metric_name} is not defined")
     else:
         metric = getattr(Metrics(), metric_name)
         metric_params = metric.model_fields.keys()
 
-        if params == metric_params:
+        print("metric_params")
+        print(set(metric_params))
+
+
+        print("params keys")
+        print(set(params.keys()))
+
+        if set(params.keys()).issubset(set(metric_params)):
             return metric(**params).calculate(expected, out)
         else:
-            print(f"Metric {metric_name} has the following params: {metric_params} and you gave those: {params}")
+            detail_info = f"Metric {metric_name} has the following params: {metric_params} and you gave those: {params}"
+            raise HTTPException(status_code=422, detail=detail_info)

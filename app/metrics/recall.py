@@ -1,6 +1,6 @@
 from sklearn import metrics as sk_metrics
 from typing import Any
-
+from fastapi import HTTPException
 from metrics.metric_base import MetricBase
 
 
@@ -94,4 +94,4 @@ class Recall(MetricBase):
                 zero_division=self.zero_division,
             )
         except Exception as e:
-            print(f"Could not calculate score because of error: {e}")
+             raise HTTPException(status_code=422, detail=f"Could not calculate score because of error: {e}")

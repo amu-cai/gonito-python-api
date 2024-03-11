@@ -1,7 +1,7 @@
 from sklearn import metrics as sk_metrics
 from typing import Any
-
-from metric_base import MetricBase
+from fastapi import HTTPException
+from metrics.metric_base import MetricBase
 
 
 class NDCG(MetricBase):
@@ -74,5 +74,5 @@ class NDCG(MetricBase):
                 ignore_ties=self.ignore_ties
             )
         except Exception as e:
-            print(f"Could not calculate score because of error: {e}")
+             raise HTTPException(status_code=422, detail=f"Could not calculate score because of error: {e}")
 

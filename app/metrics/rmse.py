@@ -1,7 +1,7 @@
 from sklearn import metrics as sk_metrics
 from typing import Any
+from fastapi import HTTPException
 from metrics.metric_base import MetricBase
-
 
 class RMSE(MetricBase):
     """
@@ -57,6 +57,13 @@ class RMSE(MetricBase):
         -------
         Value of the metric.
         """
+        print("sample_weight")
+        print(self.sample_weight)
+        print("multioutput")
+        print(self.multioutput)
+        print(len(out))
+        print([i for i in range(len(out))])
+
         try:
             return sk_metrics.mean_squared_error(
                 y_true=expected,
@@ -66,4 +73,4 @@ class RMSE(MetricBase):
                 squared=True,
             )
         except Exception as e:
-            print(f"Could not calculate score because of error: {e}")
+             raise HTTPException(status_code=422, detail=f"Could not calculate score because of error: {e}")

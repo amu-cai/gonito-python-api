@@ -64,4 +64,4 @@ class Brier(MetricBase):
                 sample_weight=self.sample_weight,
             )
         except Exception as e:
-            print(f"Could not calculate score because of error: {e}")
+             raise HTTPException(status_code=422, detail=f"Could not calculate score because of error: {e}")

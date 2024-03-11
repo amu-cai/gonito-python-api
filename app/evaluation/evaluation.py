@@ -1,19 +1,17 @@
+from metrics.metrics import metric_info, calculate_metric, all_metrics, calculate_default_metric
+from global_helper import check_challenge_in_store, check_zip_structure, save_zip_file
 from database.models import Submission, Challenge
 import evaluation.evaluation_helper as evaluation_helper
 from datetime import datetime
 from fastapi import UploadFile, File, HTTPException
 import zipfile
-from global_helper import check_challenge_in_store, check_zip_structure, save_zip_file, check_challenge_exists
 import os
 import json
 from sqlalchemy import (
     select
 )
-from metrics.metrics import Metrics
-import inspect
 from typing import Any
-import ast
-from metrics.accuracy import Accuracy
+import json
 
 f = open('configure.json')
 data = json.load(f)
@@ -87,54 +85,17 @@ async def submit(async_session, username: str, description: str, challenge_title
 
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
 
-def change_attrib(self, name, value):
-        attribute = getattr(self, name)
-        if attribute + value < 0: attribute = 0
-        else: 
-            attribute += value
-            print(str(attribute) + ' This is inside the method')
-        setattr(self, name, attribute)
-
-
 async def evaluate(metric: str, parameters: str, out: list[Any], expected: list[Any]):
-    print("metric")
-    print(metric)
-    print("parameters")
-    print(parameters)
-
-    metrics = Metrics()
-    metric_to_eval = metrics.__getattribute__(metric)
-
-    parameters_to_parse = f'[{parameters[1:-1].replace('\\', "")}]'
-    print("parameters_to_parse")
-    print(parameters_to_parse)
-    parameters_list = ast.literal_eval(parameters_to_parse)
-
-    print("parameters_list")
-    print(parameters_list)
-
-    for param in parameters_list:
-        print("param")
-        print(param)
-        param_obj = param[1:-1].split(":")
-        print("param_obj")
-        print(param_obj)
-
-        print(Accuracy().normalize)
-        print(metric_to_eval.normalize)
-
-        change_attrib(metric_to_eval, param_obj[0], param_obj[1])
-    result = metric_to_eval.calculate(metric_to_eval, expected, out)
-
-    print("result")
-    print(result)
-    return float(1)
-
+    if parameters and parameters != "":
+        parameters = parameters[1:-1].replace('\\', "")
+        params_dict = json.loads(parameters)
+        result = calculate_metric(metric_name=metric, expected=expected, out=out, params=params_dict)
+    else:
+        result = calculate_default_metric(metric_name=metric, expected=expected, out=out)
+    return result
 
 async def get_metrics():
-    metrics = Metrics()
-    metrics_infos = [metric[1].info(metric[1]) for metric in inspect.getmembers(metrics) if hasattr(metric[1], 'info')]
-    result = [{"name": m["name"], "parameters": m["parameters"], "link": m["link"]} for m in metrics_infos]
+    result = [{"name": m, "parameters": metric_info(m)["parameters"], "link": metric_info(m)["link"]} for m in all_metrics()]
     return result
 
 async def get_all_submissions(async_session, challenge: str):
@@ -152,6 +113,7 @@ async def get_all_submissions(async_session, challenge: str):
             "test_result": submission.test_result,
             "timestamp": submission.timestamp,
         })
+        
     return result
 
 
@@ -169,6 +131,7 @@ async def get_my_submissions(async_session, challenge: str, user):
             "test_result": submission.test_result,
             "timestamp": submission.timestamp,
         })
+        
     return result
 
 async def get_leaderboard(async_session, challenge: str):
