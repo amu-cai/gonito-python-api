@@ -64,7 +64,7 @@ class Precision(MetricBase):
             ]
         }
 
-    def precision(
+    def calculate(
         self,
         expected: list[Any],
         out: list[Any]
