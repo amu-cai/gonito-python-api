@@ -7,7 +7,6 @@ from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
 from auth.models import CreateUserRequest
-import json
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
@@ -16,11 +15,19 @@ from sqlalchemy import (
     select,
 )
 from auth.auth_helper import valid_email, valid_password, valid_username
+import os
 
-f = open('configure.json')
-data = json.load(f)
-SECRET_KEY = data['key']
-ALGORITHM = data['algorithm']
+KEY_ENV = os.getenv("KEY")
+if KEY_ENV is not None:
+    SECRET_KEY = KEY_ENV
+else:
+    raise FileNotFoundError("KEY env variable not defined")
+
+ALG_ENV = os.getenv("ALGORITHM")
+if ALG_ENV is not None:
+    ALGORITHM = ALG_ENV
+else:
+    raise FileNotFoundError("ALGORITHM env variable not defined")
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')

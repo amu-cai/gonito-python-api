@@ -3,3 +3,4 @@ __pycache__
 configure.json
 app/*/challenges/*
 app/*/temp/*
+.env

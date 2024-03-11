@@ -10,12 +10,16 @@ from admin.models import UserRightsModel
 from database.models import Challenge
 from secrets import token_hex
 import shutil
-import json
+import os
+
+
+STORE_ENV = os.getenv("STORE_PATH")
+if STORE_ENV is not None:
+    STORE = STORE_ENV
+else:
+    raise FileNotFoundError("STORE_PATH env variable not defined")
 
 SAVE_SEPARATOR = '_~~~_'
-f = open('configure.json')
-data = json.load(f)
-STORE = data['store_path']
 challenges_dir = f"{STORE}/challenges"
 deleted_challenges_dir = f"{STORE}/deleted_challenges"
 

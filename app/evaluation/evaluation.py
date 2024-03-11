@@ -13,9 +13,12 @@ from sqlalchemy import (
 from typing import Any
 import json
 
-f = open('configure.json')
-data = json.load(f)
-STORE = data['store_path']
+STORE_ENV = os.getenv("STORE_PATH")
+if STORE_ENV is not None:
+    STORE = STORE_ENV
+else:
+    raise FileNotFoundError("STORE_PATH env variable not defined")
+
 challenges_dir = f"{STORE}/challenges"
 
 async def submit(async_session, username: str, description: str, challenge_title: str, submission_file:UploadFile = File(...)):

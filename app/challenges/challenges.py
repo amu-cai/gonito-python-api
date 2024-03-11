@@ -2,7 +2,6 @@ from fastapi import UploadFile, File, HTTPException
 from database.models import Challenge
 import challenges.challenges_helper as challenges_helper
 from challenges.models import ChallengeInputModel
-import json
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
@@ -11,10 +10,13 @@ from sqlalchemy import (
     select,
 )
 from global_helper import check_challenge_exists, save_zip_file
+import os
 
-f = open('configure.json')
-data = json.load(f)
-STORE = data['store_path']
+STORE_ENV = os.getenv("STORE_PATH")
+if STORE_ENV is not None:
+    STORE = STORE_ENV
+else:
+    raise FileNotFoundError("STORE_PATH env variable not defined")
 
 challenges_dir = f"{STORE}/challenges"
 

@@ -23,6 +23,9 @@ services:
       - DB_NAME=${DB_NAME}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
+      - KEY=${KEY}
+      - ALGORITHM=${ALGORITHM}
+      - STORE_PATH=${STORE_PATH}
     depends_on:
       - db
     ports:
