@@ -4,9 +4,9 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class ExplainedVariance(MetricBase):
+class MedianAbsoluteError(MetricBase):
     """
-    Explained variance metric class.
+    Median absolute error metric class.
 
     Parameters
     ----------
@@ -14,21 +14,16 @@ class ExplainedVariance(MetricBase):
         Sample weights.
     multioutput : str | list[Any], default 'uniform_average'
         Defines aggregating of multiple output scores. Values: 'raw_values',
-        'uniform_average', 'variance_weighted'.
-    force_finite : bool, default True
-        Flag indicating if NaN and -Inf scores resulting from constant data
-        should be replaced with real numbers (1.0 if prediction is perfect,
-        0.0 otherwise).
+        'uniform_average'.
     """
 
     sample_weight: list[Any] | None = None
     multioutput: str | list[Any] = "uniform_average"
-    force_finite: bool = True
 
     def info(self) -> dict:
         return {
             "name": "accuracy",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html#sklearn.metrics.explained_variance_score",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.median_absolute_error.html#sklearn.metrics.median_absolute_error",
             "parameters": [
                 {
                     "name": "sample_weight",
@@ -39,12 +34,7 @@ class ExplainedVariance(MetricBase):
                     "name": "multioutput",
                     "data_type": "str | list[Any]",
                     "default_value": "uniform_average",
-                    "values": "raw_values, uniform_average, variance_weighted"
-                },
-                {
-                    "name": "force_finite",
-                    "data_type": "bool",
-                    "default_value": "True"
+                    "values": "raw_values, uniform_average"
                 }
             ]
         }
@@ -69,12 +59,11 @@ class ExplainedVariance(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.explained_variance_score(
+            return sk_metrics.median_absolute_error(
                 y_true=expected,
                 y_pred=out,
                 sample_weight=self.sample_weight,
                 multioutput=self.multioutput,
-                force_finite=self.force_finite,
             )
         except Exception as e:
             print(f"Could not calculate score because of error: {e}")
