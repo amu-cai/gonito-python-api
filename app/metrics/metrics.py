@@ -18,6 +18,7 @@ from hinge_loss import HingeLoss
 from log_loss import LogLoss
 from matthews_correlation import MatthewsCorrelation
 from ndcg import NDCG
+from explained_variance import ExplainedVariance
 
 
 class Metrics(BaseModel):
@@ -39,6 +40,7 @@ class Metrics(BaseModel):
     log_loss: MetricBase = LogLoss
     matthews_correlation: MetricBase = MatthewsCorrelation
     ndcg: MetricBase = NDCG
+    explained_variance: MetricBase = ExplainedVariance
 
 
 def all_metrics() -> list[str]:
