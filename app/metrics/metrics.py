@@ -28,6 +28,7 @@ from d2_tweedie import D2Tweedie
 from mean_pinball_loss import MeanPinballLoss
 from d2_pinball import D2Pinball
 from d2_absolute_error import D2AbsoluteError
+from bleu import Bleu
 
 
 class Metrics(BaseModel):
@@ -59,6 +60,7 @@ class Metrics(BaseModel):
     mean_pinball_loss: MetricBase = MeanPinballLoss
     d2_pinball: MetricBase = D2Pinball
     d2_absolute_error: MetricBase = D2AbsoluteError
+    bleu: MetricBase = Bleu
 
 
 def all_metrics() -> list[str]:
