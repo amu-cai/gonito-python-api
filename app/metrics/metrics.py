@@ -21,6 +21,7 @@ from ndcg import NDCG
 from explained_variance import ExplainedVariance
 from median_absolute_error import MedianAbsoluteError
 from r2 import R2
+from mean_poisson_deviance import MeanPiossonDeviance
 
 
 class Metrics(BaseModel):
@@ -45,6 +46,7 @@ class Metrics(BaseModel):
     explained_variance: MetricBase = ExplainedVariance
     median_absolute_error: MetricBase = MedianAbsoluteError
     r2: MetricBase = R2
+    mean_poisson_deviance: MetricBase = MeanPiossonDeviance
 
 
 def all_metrics() -> list[str]:
