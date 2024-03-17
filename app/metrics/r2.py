@@ -4,9 +4,9 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class ExplainedVariance(MetricBase):
+class R2(MetricBase):
     """
-    Explained variance metric class.
+    R2 score metric class.
 
     Parameters
     ----------
@@ -27,8 +27,8 @@ class ExplainedVariance(MetricBase):
 
     def info(self) -> dict:
         return {
-            "name": "explained variance",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.explained_variance_score.html#sklearn.metrics.explained_variance_score",
+            "name": "r2 score",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.r2_score.html#sklearn.metrics.r2_score",
             "parameters": [
                 {
                     "name": "sample_weight",
@@ -69,7 +69,7 @@ class ExplainedVariance(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.explained_variance_score(
+            return sk_metrics.r2_score(
                 y_true=expected,
                 y_pred=out,
                 sample_weight=self.sample_weight,

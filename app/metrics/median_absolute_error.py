@@ -22,7 +22,7 @@ class MedianAbsoluteError(MetricBase):
 
     def info(self) -> dict:
         return {
-            "name": "accuracy",
+            "name": "median absolute error",
             "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.median_absolute_error.html#sklearn.metrics.median_absolute_error",
             "parameters": [
                 {

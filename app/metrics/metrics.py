@@ -19,6 +19,8 @@ from log_loss import LogLoss
 from matthews_correlation import MatthewsCorrelation
 from ndcg import NDCG
 from explained_variance import ExplainedVariance
+from median_absolute_error import MedianAbsoluteError
+from r2 import R2
 
 
 class Metrics(BaseModel):
@@ -41,6 +43,8 @@ class Metrics(BaseModel):
     matthews_correlation: MetricBase = MatthewsCorrelation
     ndcg: MetricBase = NDCG
     explained_variance: MetricBase = ExplainedVariance
+    median_absolute_error: MetricBase = MedianAbsoluteError
+    r2: MetricBase = R2
 
 
 def all_metrics() -> list[str]:
