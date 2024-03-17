@@ -24,6 +24,7 @@ from r2 import R2
 from mean_poisson_deviance import MeanPoissonDeviance
 from mean_gamma_deviance import MeanGammaDeviance
 from mean_tweedie_deviance import MeanTweedieDeviance
+from d2_tweedie import D2Tweedie
 
 
 class Metrics(BaseModel):
@@ -51,6 +52,7 @@ class Metrics(BaseModel):
     mean_poisson_deviance: MetricBase = MeanPoissonDeviance
     mean_gamma_deviance: MetricBase = MeanGammaDeviance
     mean_tweedie_deviance: MetricBase = MeanTweedieDeviance
+    d2_tweedie: MetricBase = D2Tweedie
 
 
 def all_metrics() -> list[str]:
