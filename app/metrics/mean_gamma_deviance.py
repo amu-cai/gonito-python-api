@@ -4,9 +4,9 @@ from typing import Any
 from metric_base import MetricBase
 
 
-class MeanPiossonDeviance(MetricBase):
+class MeanGammaDeviance(MetricBase):
     """
-    Mean Poisson deviance metric class.
+    Mean gamma deviance metric class.
 
     Parameters
     ----------
@@ -18,8 +18,8 @@ class MeanPiossonDeviance(MetricBase):
 
     def info(self) -> dict:
         return {
-            "name": "mean Poisson deviance",
-            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_poisson_deviance.html#sklearn.metrics.mean_poisson_deviance",
+            "name": "mean gamma deviance",
+            "link": "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_gamma_deviance.html#sklearn.metrics.mean_gamma_deviance",
             "parameters": [
                 {
                     "name": "sample_weight",
@@ -49,7 +49,7 @@ class MeanPiossonDeviance(MetricBase):
         Value of the metric.
         """
         try:
-            return sk_metrics.mean_poisson_deviance(
+            return sk_metrics.mean_gamma_deviance(
                 y_true=expected,
                 y_pred=out,
                 sample_weight=self.sample_weight,
