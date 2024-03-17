@@ -23,6 +23,7 @@ from median_absolute_error import MedianAbsoluteError
 from r2 import R2
 from mean_poisson_deviance import MeanPoissonDeviance
 from mean_gamma_deviance import MeanGammaDeviance
+from mean_tweedie_deviance import MeanTweedieDeviance
 
 
 class Metrics(BaseModel):
@@ -49,6 +50,7 @@ class Metrics(BaseModel):
     r2: MetricBase = R2
     mean_poisson_deviance: MetricBase = MeanPoissonDeviance
     mean_gamma_deviance: MetricBase = MeanGammaDeviance
+    mean_tweedie_deviance: MetricBase = MeanTweedieDeviance
 
 
 def all_metrics() -> list[str]:
