@@ -20,6 +20,18 @@ from metrics.log_loss import LogLoss
 from metrics.matthews_correlation import MatthewsCorrelation
 from metrics.ndcg import NDCG
 
+from metrics.explained_variance import ExplainedVariance
+from metrics.median_absolute_error import MedianAbsoluteError
+from metrics.r2 import R2
+from metrics.mean_poisson_deviance import MeanPoissonDeviance
+from metrics.mean_gamma_deviance import MeanGammaDeviance
+from metrics.mean_tweedie_deviance import MeanTweedieDeviance
+from metrics.d2_tweedie import D2Tweedie
+from metrics.mean_pinball_loss import MeanPinballLoss
+from metrics.d2_pinball import D2Pinball
+from metrics.d2_absolute_error import D2AbsoluteError
+from metrics.bleu import Bleu
+
 class Metrics(BaseModel):
     """All available metrics."""
 
@@ -39,6 +51,17 @@ class Metrics(BaseModel):
     log_loss: MetricBase = LogLoss
     matthews_correlation: MetricBase = MatthewsCorrelation
     ndcg: MetricBase = NDCG
+    explained_variance: MetricBase = ExplainedVariance
+    median_absolute_error: MetricBase = MedianAbsoluteError
+    r2: MetricBase = R2
+    mean_poisson_deviance: MetricBase = MeanPoissonDeviance
+    mean_gamma_deviance: MetricBase = MeanGammaDeviance
+    mean_tweedie_deviance: MetricBase = MeanTweedieDeviance
+    d2_tweedie: MetricBase = D2Tweedie
+    mean_pinball_loss: MetricBase = MeanPinballLoss
+    d2_pinball: MetricBase = D2Pinball
+    d2_absolute_error: MetricBase = D2AbsoluteError
+    bleu: MetricBase = Bleu
 
 
 def all_metrics() -> list[str]:
