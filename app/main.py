@@ -173,3 +173,6 @@ async def user(user: user_dependency):
         raise HTTPException(status_code=401, detail='Authentication Failed')
     return {"User": user}
 
+@app.get("/", status_code=status.HTTP_200_OK)
+async def root():
+    return {"Info": "api launched successfully, go to docs/ to see available endpoints."}
