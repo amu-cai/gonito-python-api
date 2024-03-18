@@ -11,9 +11,22 @@ import challenges.challenges as challenges
 import evaluation.evaluation as evaluation
 import admin.admin as admin
 from database.db_connection import get_engine, get_session
-from database.base_table import Base
+from database.database import Base
 from sqlalchemy.ext.asyncio import AsyncSession
 from global_helper import check_challenge_exists
+
+engine = get_engine()
+session = get_session(engine)
+
+# postgre async db
+async def get_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    db = session()
+    try:
+        yield db
+    finally:
+        await db.close()
 
 app = FastAPI()
 
@@ -27,22 +40,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-engine = get_engine()
-session = get_session(engine)
-
-# postgre async db
-async def get_db():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    db = session()
-    try:
-        yield db
-    finally:
-        await db.close()
-
-db_dependency = Annotated[AsyncSession, Depends(get_db)]
 user_dependency = Annotated[dict, Depends(auth.get_current_user)]
+db_dependency = Annotated[AsyncSession, Depends(get_db)]
 
 auth_router = APIRouter(
     prefix="/auth",

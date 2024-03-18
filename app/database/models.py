@@ -1,5 +1,5 @@
 from database.database import Base
-from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey, Float
+from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey, Float, Table
 
 class User(Base):
     __tablename__ = 'users'
@@ -16,7 +16,7 @@ class Challenge(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     author = Column(String, ForeignKey("users.username"))
-    title = Column(String, ForeignKey("challenges.title"))
+    title = Column(String, unique=True)
     source = Column(String)
     type = Column(String)
     description = Column(String)
