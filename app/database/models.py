@@ -1,8 +1,17 @@
 from database.database import Base
-from sqlalchemy import Column, Integer, String, Boolean, UnicodeText, ForeignKey, Float, Table
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    UnicodeText,
+    ForeignKey,
+    Float,
+)
+
 
 class User(Base):
-    __tablename__ = 'users'
+    __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True)
@@ -11,8 +20,9 @@ class User(Base):
     is_admin = Column(Boolean)
     is_author = Column(Boolean)
 
+
 class Challenge(Base):
-    __tablename__ = 'challenges'
+    __tablename__ = "challenges"
 
     id = Column(Integer, primary_key=True, index=True)
     author = Column(String, ForeignKey("users.username"))
@@ -28,8 +38,9 @@ class Challenge(Base):
     readme = Column(UnicodeText)
     deleted = Column(Boolean)
 
+
 class Submission(Base):
-    __tablename__ = 'submission'
+    __tablename__ = "submission"
 
     id = Column(Integer, primary_key=True, index=True)
     challenge = Column(String, ForeignKey("challenges.title"))
