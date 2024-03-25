@@ -96,7 +96,10 @@ async def submit(async_session: async_sessionmaker[AsyncSession], username: str,
         submissions = (await session.execute(select(Submission).filter_by(challenge=challenge_title))).scalars().all()
         scores = [submission.test_result for submission in submissions]
         scores.append(test_result)
-        challenge.best_score = max(scores)
+        if challenge.sorting == "ascending":
+            challenge.best_score = min(scores)
+        else:
+            challenge.best_score = max(scores)
         await session.commit()
 
     return {"success": True, "submission": "description", "message": "Submission added successfully"}

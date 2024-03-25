@@ -76,6 +76,7 @@ async def create_challenge(db: db_dependency,  user: user_dependency,
                             type: Annotated[str, Form()] = "",
                             metric: Annotated[str, Form()] = "",
                             parameters: Annotated[str, Form()] = "",
+                            sorting: Annotated[str, Form()] = "",
                             challenge_file:UploadFile = File(...)):
     await auth.check_user_exists(async_session=db, username=user["username"])
     challenge_input_model: ChallengeInputModel = ChallengeInputModel(
@@ -87,6 +88,7 @@ async def create_challenge(db: db_dependency,  user: user_dependency,
         main_metric_parameters = parameters,
         deadline = deadline,
         award = award,
+        sorting = sorting,
     )
     return await challenges.create_challenge(async_session=db, username=user["username"], challenge_file=challenge_file, challenge_input_model=challenge_input_model)
 
@@ -104,9 +106,9 @@ evaluation_router = APIRouter(
 )
 
 @evaluation_router.post("/submit")
-async def submit(db: db_dependency, user: user_dependency, 
-                 description: Annotated[str, Form()], 
-                 challenge_title: Annotated[str, Form()], 
+async def submit(db: db_dependency, user: user_dependency,
+                 description: Annotated[str, Form()],
+                 challenge_title: Annotated[str, Form()],
                  submission_file: UploadFile = File(...)):
     await auth.check_user_exists(async_session=db, username=user["username"])
     challenge_exists = await check_challenge_exists(async_session=db, title=challenge_title)

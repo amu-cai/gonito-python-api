@@ -27,6 +27,7 @@ class Challenge(Base):
     award = Column(String)
     readme = Column(UnicodeText)
     deleted = Column(Boolean)
+    sorting = Column(String)
 
 class Submission(Base):
     __tablename__ = 'submission'

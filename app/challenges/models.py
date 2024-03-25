@@ -9,3 +9,4 @@ class ChallengeInputModel(BaseModel):
     deadline: str | None = None
     award: str | None = None
     challenge_source: str
+    sorting: str

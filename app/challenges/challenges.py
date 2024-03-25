@@ -31,8 +31,6 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession],
     if challenge_exists:
         raise HTTPException(status_code=422, detail=f'{challenge_title} challenge has been already created!')
 
-    best_score = 0
-
     check_file_extension(challenge_file)
     temp_zip_path = await save_zip_file(challenge_file)
     challenge_folder_name = await challenges_helper.extract_challenge(challenge_title, temp_zip_path, challenges_dir)
@@ -47,9 +45,10 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession],
         description = challenge_input_model.description,
         main_metric = challenge_input_model.main_metric,
         main_metric_parameters = challenge_input_model.main_metric_parameters,
-        best_score = best_score,
+        best_score = None,
         deadline = challenge_input_model.deadline,
         award = challenge_input_model.award,
+        sorting = challenge_input_model.sorting,
         readme = readme_content,
         deleted = False
     )
@@ -81,7 +80,8 @@ async def all_challenges(
             "bestScore": challenge.best_score,
             "deadline": challenge.deadline,
             "award": challenge.award,
-            "deleted": challenge.deleted
+            "deleted": challenge.deleted,
+            "sorting": challenge.sorting
         })
     return result
 
@@ -105,5 +105,6 @@ async def get_challenge_info(async_session, challenge: str):
         "bestScore": challenge_info.best_score,
         "deadline": challenge_info.deadline,
         "award": challenge_info.award,
-        "deleted": challenge_info.deleted
+        "deleted": challenge_info.deleted,
+        "sorting": challenge_info.sorting
     }
