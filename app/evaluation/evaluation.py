@@ -84,9 +84,19 @@ async def submit(async_session, username: str, description: str, challenge_title
 
     async with async_session as session:
         session.add(create_submission_model)
+        challenge = (await session.execute(select(Challenge).filter_by(title=challenge_title))).scalars().one()
+
+        submissions = (await session.execute(select(Submission).filter_by(challenge=challenge_title))).scalars().all()
+        scores = [submission.test_result for submission in submissions]
+        scores.append(test_result)
+        new_best_score = max(scores)
+        print(new_best_score)
+
+        challenge.best_score = new_best_score
         await session.commit()
 
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
+
 
 async def evaluate(metric: str, parameters: str, out: list[Any], expected: list[Any]):
     if parameters and parameters != "":
