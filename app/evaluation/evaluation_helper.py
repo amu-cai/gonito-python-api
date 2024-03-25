@@ -11,11 +11,6 @@ else:
 
 challenges_dir = f"{STORE}/challenges"
 
-def check_file_extension(file):
-    file_ext = file.filename.split(".").pop()
-    if file_ext != "zip":
-        raise HTTPException(status_code=422, detail='Bad extension')
-
 async def save_zip_file(file):
     file_name = token_hex(10)
     file_path = f"{file_name}.zip"

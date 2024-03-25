@@ -9,8 +9,9 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy import (
     select,
 )
-from global_helper import check_challenge_exists, save_zip_file
+from global_helper import check_challenge_exists, save_zip_file, check_file_extension
 import os
+from evaluation.evaluation import submit_test
 
 STORE_ENV = os.getenv("STORE_PATH")
 if STORE_ENV is not None:
@@ -32,9 +33,9 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession],
 
     best_score = 0
 
-    challenges_helper.check_file_extension(async_session, challenge_file, challenge_title)
+    check_file_extension(challenge_file)
     temp_zip_path = await save_zip_file(challenge_file)
-    challenge_folder_name = await challenges_helper.extract_challenge(async_session, challenge_title, temp_zip_path, challenges_dir)
+    challenge_folder_name = await challenges_helper.extract_challenge(challenge_title, temp_zip_path, challenges_dir)
     readme = open(f"{challenges_dir}/{challenge_folder_name}/README.md", "r")
     readme_content = readme.read()
 
@@ -53,12 +54,16 @@ async def create_challenge(async_session: async_sessionmaker[AsyncSession],
         deleted = False
     )
 
+    await submit_test(username=username,
+                      description=challenge_input_model.description,
+                      challenge=create_challenge_model,
+                      sub_file_path=temp_zip_path)
+
     async with async_session as session:
         session.add(create_challenge_model)
         await session.commit()
 
     return {"success": True, "challenge": challenge_folder_name, "message": "Challenge uploaded successfully"}
-
 
 async def all_challenges(
     async_session: async_sessionmaker[AsyncSession]

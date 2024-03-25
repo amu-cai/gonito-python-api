@@ -1,5 +1,4 @@
 from glob import glob
-import json
 from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     AsyncSession,
@@ -10,6 +9,7 @@ from sqlalchemy import (
 from database.models import Challenge
 from secrets import token_hex
 import os
+from fastapi import HTTPException
 
 STORE_ENV = os.getenv("STORE_PATH")
 if STORE_ENV is not None:
@@ -50,3 +50,8 @@ async def save_zip_file(file):
         content = await file.read()
         f.write(content)
     return temp_zip_path
+
+def check_file_extension(file):
+    file_ext = file.filename.split(".").pop()
+    if file_ext != "zip":
+        raise HTTPException(status_code=422, detail='Bad extension')

@@ -1,5 +1,5 @@
 from metrics.metrics import metric_info, calculate_metric, all_metrics, calculate_default_metric
-from global_helper import check_challenge_in_store, check_zip_structure, save_zip_file
+from global_helper import check_challenge_in_store, check_zip_structure, save_zip_file, check_file_extension
 from database.models import Submission, Challenge
 import evaluation.evaluation_helper as evaluation_helper
 from datetime import datetime
@@ -12,6 +12,12 @@ from sqlalchemy import (
 )
 from typing import Any
 import json
+from shutil import rmtree
+from sqlalchemy.ext.asyncio import (
+    async_sessionmaker,
+    AsyncSession,
+)
+from os.path import exists
 
 STORE_ENV = os.getenv("STORE_PATH")
 if STORE_ENV is not None:
@@ -21,9 +27,10 @@ else:
 
 challenges_dir = f"{STORE}/challenges"
 
-async def submit(async_session, username: str, description: str, challenge_title: str, submission_file:UploadFile = File(...)):
+async def submit(async_session: async_sessionmaker[AsyncSession], username: str, description: str, challenge_title: str, submission_file:UploadFile = File(...)):
     submitter = evaluation_helper.check_submitter(username)
     description = evaluation_helper.check_description(description)
+    check_file_extension(submission_file)
     temp_zip_path = await save_zip_file(submission_file)
 
     async with async_session as session:
@@ -62,13 +69,13 @@ async def submit(async_session, username: str, description: str, challenge_title
     os.remove(temp_zip_path)
 
     if folder_name_error:
-        raise HTTPException(status_code=422, detail=f'Invalid challenge folder name "{challenge_name}" - is not equal to challenge title "{challenge_title}"')
+        raise HTTPException(status_code=422, detail=f'Invalid submission folder name "{challenge_name}" - is not equal to submission title "{challenge_title}"')
 
     if challenge_not_exist_error:
-        raise HTTPException(status_code=422, detail=f'Challenge "{challenge_name}" not exist in store!')
+        raise HTTPException(status_code=422, detail=f'Submission "{challenge_name}" not exist in store!')
 
     if structure_error:
-        raise HTTPException(status_code=422, detail=f'Bad challenge structure! Challenge required files: {str(required_submission_files)}')
+        raise HTTPException(status_code=422, detail=f'Bad submission structure! Submission required files: {str(required_submission_files)}')
 
     timestamp = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
 
@@ -89,10 +96,7 @@ async def submit(async_session, username: str, description: str, challenge_title
         submissions = (await session.execute(select(Submission).filter_by(challenge=challenge_title))).scalars().all()
         scores = [submission.test_result for submission in submissions]
         scores.append(test_result)
-        new_best_score = max(scores)
-        print(new_best_score)
-
-        challenge.best_score = new_best_score
+        challenge.best_score = max(scores)
         await session.commit()
 
     return {"success": True, "submission": "description", "message": "Submission added successfully"}
@@ -111,7 +115,7 @@ async def get_metrics():
     result = [{"name": m, "parameters": metric_info(m)["parameters"], "link": metric_info(m)["link"]} for m in all_metrics()]
     return result
 
-async def get_all_submissions(async_session, challenge: str):
+async def get_all_submissions(async_session: async_sessionmaker[AsyncSession], challenge: str):
     result = []
 
     async with async_session as session:
@@ -130,7 +134,7 @@ async def get_all_submissions(async_session, challenge: str):
     return result
 
 
-async def get_my_submissions(async_session, challenge: str, user):
+async def get_my_submissions(async_session: async_sessionmaker[AsyncSession], challenge: str, user):
     result = []
 
     async with async_session as session:
@@ -147,7 +151,7 @@ async def get_my_submissions(async_session, challenge: str, user):
         
     return result
 
-async def get_leaderboard(async_session, challenge: str):
+async def get_leaderboard(async_session: async_sessionmaker[AsyncSession], challenge: str):
     result = []
 
     async with async_session as session:
@@ -170,3 +174,68 @@ async def get_leaderboard(async_session, challenge: str):
         })
 
     return result
+
+async def submit_test(username: str, description: str, challenge: Challenge, sub_file_path: str):
+    submitter = evaluation_helper.check_submitter(username)
+    description = f"Create challenge {challenge.title} submission test"
+
+    metric = challenge.main_metric
+    parameters = challenge.main_metric_parameters
+
+    dev_result = 0
+    test_result = 0
+
+    required_submission_files = ["dev-0/out.tsv", "test-A/out.tsv"]
+    with zipfile.ZipFile(sub_file_path, 'r') as zip_ref:
+        challenge_name = zip_ref.filelist[0].filename[:-1]
+
+        folder_name_error = not challenge.title == challenge_name
+        challenge_not_exist_error = not check_challenge_in_store(challenge_name)
+        structure_error = check_zip_structure(zip_ref, challenge_name, required_submission_files)
+
+        if True not in [folder_name_error, challenge_not_exist_error, structure_error]:
+            for file in zip_ref.filelist:
+                if file.filename == f"{challenge_name}/dev-0/out.tsv":
+                    with zip_ref.open(file, "r") as submission_out_content:
+                        dev_file_from_challenge = open(f"{challenges_dir}/{challenge_name}/dev-0/expected.tsv", "r")
+                        challenge_results = [float(line) for line in dev_file_from_challenge.readlines()]
+                        submission_results = [float(line) for line in submission_out_content.readlines()]
+                        dev_result = await evaluate(metric=metric, parameters=parameters, out=submission_results, expected=challenge_results)
+
+                if file.filename == f"{challenge_name}/test-A/out.tsv":
+                    with zip_ref.open(file, "r") as submission_out_content:
+                        test_file_from_challenge = open(f"{challenges_dir}/{challenge_name}/test-A/expected.tsv", "r")
+                        challenge_results = [float(line) for line in test_file_from_challenge.readlines()]
+                        submission_results = [float(line) for line in submission_out_content.readlines()]
+                        test_result = await evaluate(metric=metric, parameters=parameters, out=submission_results, expected=challenge_results)
+
+    os.remove(sub_file_path)
+
+    if folder_name_error:
+        if exists(f"{challenges_dir}/{challenge.title}"):
+            rmtree(f"{challenges_dir}/{challenge.title}")
+        raise HTTPException(status_code=422, detail=f'Invalid test submission folder name "{challenge_name}" - is not equal to challenge title "{challenge.title}"')
+
+    if challenge_not_exist_error:
+        if exists(f"{challenges_dir}/{challenge.title}"):
+            rmtree(f"{challenges_dir}/{challenge.title}")
+        raise HTTPException(status_code=422, detail=f'Test submission "{challenge_name}" not exist in store!')
+
+    if structure_error:
+        if exists(f"{challenges_dir}/{challenge.title}"):
+            rmtree(f"{challenges_dir}/{challenge.title}")
+        raise HTTPException(status_code=422, detail=f'Bad test submission structure! Test submission required files: {str(required_submission_files)}')
+
+    timestamp = datetime.now().strftime("%d-%m-%Y, %H:%M:%S")
+
+    create_submission_model = Submission(
+        challenge = challenge.title,
+        submitter = submitter,
+        description = description,
+        dev_result = dev_result,
+        test_result = test_result,
+        timestamp = timestamp,
+        deleted = False
+    )
+
+    return {"success": True, "test submission": create_submission_model.description, "message": "Submission tested successfully"}
